@@ -1,0 +1,3271 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Cryptanalysis · Resource Estimator</title>
+<meta name="description" content="Logical and physical quantum-attack resource estimates for symmetric and asymmetric ciphers.">
+
+<!-- Tailwind (Play CDN) -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- React 18 -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<!-- prop-types (Recharts dependency) -->
+<script crossorigin src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+
+<!-- Recharts UMD -->
+<script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+
+<!-- Babel standalone (for in-browser JSX) -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Cipher data file — edit data.js to publish new estimates -->
+<script src="data.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  html, body { background: #070912; color: rgba(255,255,255,0.9); }
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .font-display { font-family: 'Instrument Serif', serif; font-weight: 400; letter-spacing: -0.01em; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .font-sans { font-family: 'Inter', system-ui, sans-serif; }
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+  input.bare-input { background: transparent; border: none; outline: none; width: 100%; color: inherit; font: inherit; }
+  input.bare-input::placeholder { color: rgba(255,255,255,0.25); }
+  input.bare-input:disabled { cursor: default; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
+  @keyframes pulseSlow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+  .pulse-slow { animation: pulseSlow 3s ease-in-out infinite; }
+  /* Hide raw content before React mounts */
+  #root:empty + .boot-loader { display: flex; }
+  .boot-loader { display: none; position: fixed; inset: 0; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.3); text-transform: uppercase; }
+
+  /* ─────────────────────────────────────────────────────────
+     LIGHT THEME
+     Activated by [data-theme="light"] on <html>.
+     Strategy: targeted overrides of dark utility classes.
+     ───────────────────────────────────────────────────────── */
+  html[data-theme="light"] { background: #f6f7fb; color: rgba(0,0,0,0.85); }
+  html[data-theme="light"] body { background: #f6f7fb; }
+
+  /* CSS variables for inline-style elements (chips, recharts ticks etc.) that
+     can't be styled with utility classes alone. */
+  :root { --chip-off-text: rgba(255,255,255,0.5); --chip-off-border: rgba(255,255,255,0.1); }
+  html[data-theme="light"] { --chip-off-text: rgba(0,0,0,0.55); --chip-off-border: rgba(0,0,0,0.13); }
+
+  /* Grid background */
+  [data-theme="light"] .grid-bg {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.045) 1px, transparent 1px);
+  }
+
+  /* Text colors (white-based opacities → black-based) */
+  [data-theme="light"] .text-white { color: rgba(0,0,0,0.9); }
+  [data-theme="light"] .text-white\/95 { color: rgba(0,0,0,0.88); }
+  [data-theme="light"] .text-white\/90 { color: rgba(0,0,0,0.85); }
+  [data-theme="light"] .text-white\/85 { color: rgba(0,0,0,0.8); }
+  [data-theme="light"] .text-white\/80 { color: rgba(0,0,0,0.75); }
+  [data-theme="light"] .text-white\/75 { color: rgba(0,0,0,0.72); }
+  [data-theme="light"] .text-white\/70 { color: rgba(0,0,0,0.65); }
+  [data-theme="light"] .text-white\/65 { color: rgba(0,0,0,0.6); }
+  [data-theme="light"] .text-white\/60 { color: rgba(0,0,0,0.55); }
+  [data-theme="light"] .text-white\/55 { color: rgba(0,0,0,0.5); }
+  [data-theme="light"] .text-white\/50 { color: rgba(0,0,0,0.5); }
+  [data-theme="light"] .text-white\/45 { color: rgba(0,0,0,0.45); }
+  [data-theme="light"] .text-white\/40 { color: rgba(0,0,0,0.42); }
+  [data-theme="light"] .text-white\/35 { color: rgba(0,0,0,0.4); }
+  [data-theme="light"] .text-white\/30 { color: rgba(0,0,0,0.32); }
+  [data-theme="light"] .text-white\/25 { color: rgba(0,0,0,0.28); }
+  [data-theme="light"] .text-white\/20 { color: rgba(0,0,0,0.22); }
+
+  /* Specific tinted colors (cipher accents stay; UI accents lighten slightly) */
+  [data-theme="light"] .text-cyan-300 { color: #0e7490; }
+  [data-theme="light"] .text-cyan-300\/70 { color: rgba(14,116,144,0.85); }
+  [data-theme="light"] .text-cyan-200\/85 { color: rgba(14,116,144,0.95); }
+  [data-theme="light"] .text-amber-300 { color: #b45309; }
+
+  /* Background colors */
+  [data-theme="light"] .bg-\[\#070912\] { background-color: #f6f7fb; }
+  [data-theme="light"] .bg-\[\#0a0e1a\] { background-color: #ffffff; }
+  [data-theme="light"] .bg-\[\#0a0e1a\]\/95 { background-color: rgba(255,255,255,0.95); }
+  [data-theme="light"] .bg-white\/\[0\.015\] { background-color: rgba(0,0,0,0.025); }
+  [data-theme="light"] .bg-white\/\[0\.02\] { background-color: rgba(0,0,0,0.03); }
+  [data-theme="light"] .bg-white\/\[0\.03\] { background-color: rgba(0,0,0,0.04); }
+  [data-theme="light"] .bg-white\/\[0\.04\] { background-color: rgba(0,0,0,0.05); }
+  [data-theme="light"] .bg-white\/\[0\.06\] { background-color: rgba(0,0,0,0.06); }
+  [data-theme="light"] .bg-white\/5 { background-color: rgba(0,0,0,0.05); }
+  [data-theme="light"] .bg-white\/10 { background-color: rgba(0,0,0,0.08); }
+  [data-theme="light"] .bg-cyan-400\/10 { background-color: rgba(6,182,212,0.12); }
+  [data-theme="light"] .bg-cyan-400\/20 { background-color: rgba(6,182,212,0.2); }
+  [data-theme="light"] .bg-amber-400\/10 { background-color: rgba(245,158,11,0.15); }
+
+  /* Border colors */
+  [data-theme="light"] .border-white\/8 { border-color: rgba(0,0,0,0.09); }
+  [data-theme="light"] .border-white\/10 { border-color: rgba(0,0,0,0.1); }
+  [data-theme="light"] .border-white\/15 { border-color: rgba(0,0,0,0.13); }
+  [data-theme="light"] .border-white\/20 { border-color: rgba(0,0,0,0.18); }
+  [data-theme="light"] .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.07); }
+  [data-theme="light"] .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.09); }
+  [data-theme="light"] .border-cyan-400\/20 { border-color: rgba(6,182,212,0.35); }
+  [data-theme="light"] .border-cyan-400\/30 { border-color: rgba(6,182,212,0.45); }
+  [data-theme="light"] .border-cyan-400\/50 { border-color: rgba(6,182,212,0.55); }
+  [data-theme="light"] .border-amber-400\/30 { border-color: rgba(245,158,11,0.4); }
+
+  /* Cyan tinted text in SegBtn active state */
+  [data-theme="light"] .bg-cyan-400\/10 { background-color: rgba(6,182,212,0.1); }
+
+  /* Recharts elements (SVG inline attributes ↦ CSS) */
+  [data-theme="light"] .recharts-cartesian-grid line { stroke: rgba(0,0,0,0.06); }
+  [data-theme="light"] .recharts-cartesian-axis-tick text { fill: rgba(0,0,0,0.5); }
+  [data-theme="light"] .recharts-cartesian-axis-line { stroke: rgba(0,0,0,0.18); }
+  [data-theme="light"] .recharts-label tspan { fill: rgba(0,0,0,0.45); }
+
+  /* Scrollbar in light mode */
+  [data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+  [data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); }
+
+  /* Bare-input placeholder */
+  [data-theme="light"] input.bare-input::placeholder { color: rgba(0,0,0,0.3); }
+
+  /* Hover-text overrides */
+  [data-theme="light"] .hover\:text-white\/90:hover { color: rgba(0,0,0,0.85); }
+  [data-theme="light"] .hover\:text-white\/80:hover { color: rgba(0,0,0,0.75); }
+  [data-theme="light"] .hover\:text-white\/70:hover { color: rgba(0,0,0,0.65); }
+  [data-theme="light"] .hover\:text-cyan-300:hover { color: #0e7490; }
+  [data-theme="light"] .hover\:text-red-300:hover { color: #b91c1c; }
+  [data-theme="light"] .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(0,0,0,0.04); }
+  [data-theme="light"] .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(0,0,0,0.06); }
+  [data-theme="light"] .hover\:bg-cyan-400\/20:hover { background-color: rgba(6,182,212,0.22); }
+  [data-theme="light"] .hover\:border-white\/20:hover { border-color: rgba(0,0,0,0.18); }
+
+  /* Gradient divider line under header */
+  [data-theme="light"] .from-white\/15 { --tw-gradient-from: rgba(0,0,0,0.15) var(--tw-gradient-from-position); }
+  [data-theme="light"] .via-white\/8 { --tw-gradient-via: rgba(0,0,0,0.08) var(--tw-gradient-via-position); }
+
+  /* Boot loader text */
+  [data-theme="light"] .boot-loader { color: rgba(0,0,0,0.35); }
+
+  /* Circuit diagram figures: PNG inputs are dark-on-white line drawings.
+     • Dark mode (default): invert + slight hue rotation so lines/text become white-on-dark.
+     • Light mode: leave as-is (already correct on light background). */
+  .figure-circuit { filter: invert(1) hue-rotate(180deg); }
+  [data-theme="light"] .figure-circuit { filter: none; }
+
+  /* Black-on-transparent logos (e.g. CryptoCraft Lab wordmark): invert in dark mode
+     so the black text becomes white. Light mode leaves the original black intact. */
+  .logo-adaptive { filter: invert(1); }
+  [data-theme="light"] .logo-adaptive { filter: none; }
+
+  /* Recharts tooltip themed via CSS variables — works regardless of where
+     Recharts mounts the floating tooltip in the DOM. */
+  :root {
+    --tooltip-bg:     rgba(10, 14, 26, 0.95);
+    --tooltip-border: rgba(255, 255, 255, 0.15);
+    --tooltip-label:  rgba(255, 255, 255, 0.55);
+    --tooltip-name:   rgba(255, 255, 255, 0.85);
+    --tooltip-value:  #ffffff;
+    --tooltip-sub:    rgba(255, 255, 255, 0.55);
+    --pi-color:       #93c5fd;
+  }
+  [data-theme="light"] {
+    --tooltip-bg:     rgba(255, 255, 255, 0.98);
+    --tooltip-border: rgba(0, 0, 0, 0.12);
+    --tooltip-label:  rgba(0, 0, 0, 0.5);
+    --tooltip-name:   rgba(0, 0, 0, 0.8);
+    --tooltip-value:  rgba(0, 0, 0, 0.95);
+    --tooltip-sub:    rgba(0, 0, 0, 0.55);
+    --pi-color:       #1d4ed8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SITE METADATA — edit these fields to customize the site       -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<script id="site-config" type="application/json">
+{
+  "title": "Quantum Cryptanalysis",
+  "subtitle": "Logical & physical costs of quantum attacks on cryptography",
+  "authors": "Kyungbae Jang, Siyi Wang, Anik Basu Bhaumik, Suman Dutta, Hyunji Kim, Anubhab Baksi, Hwajeong Seo, Anupam Chattopadhyay",
+  "affiliations": [
+    { "institution": "Nanyang Technological University,", "group": "Quantum CHAI" },
+    { "institution": "Hansung University,",                "group": "CryptoCraft Lab" }
+  ],
+  "lastUpdated": "2026-05-13"
+}
+</script>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- FALLBACK CIPHER DATA                                           -->
+<!--                                                                -->
+<!-- The site loads `data.js` via a <script> tag (works both        -->
+<!-- file:// and over HTTP). The block below is used only as a      -->
+<!-- fallback when data.js is missing. To publish new estimates,    -->
+<!-- edit data.js — you normally don't need to touch this HTML.     -->
+<!--                                                                -->
+<!-- Accepted value formats for each field:                         -->
+<!--   "2^80"      · power-of-two notation                          -->
+<!--   "1.5*2^80"  · multiplier × power-of-two                      -->
+<!--   "1.2e24"    · scientific notation                            -->
+<!--   "12345"     · plain number                                   -->
+<!--   ""          · unknown / not yet measured                     -->
+<!--                                                                -->
+<!-- TIP: append ?edit=1 to the site URL to edit in the browser,    -->
+<!-- then click "Export data.js" to download an updated data.js file.     -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<script id="cipher-data" type="application/json">
+{
+  "ciphers": [
+    {
+      "id": "aes",
+      "name": "AES",
+      "color": "#06b6d4",
+      "variants": [
+        {
+          "id": "aes-128",
+          "name": "AES-128",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "3161",
+            "clifford": "2^82",
+            "tGates": "2^79.4",
+            "tDepth": "2^70"
+          },
+          "physical": {
+            "physicalQubits": "2^25",
+            "runtime": "2^95"
+          },
+          "notes": ""
+        },
+        {
+          "id": "aes-192",
+          "name": "AES-192",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "7666",
+            "clifford": "2^120.3",
+            "tGates": "2^118.3",
+            "tDepth": "2^112.3"
+          },
+          "physical": {
+            "physicalQubits": "2^26",
+            "runtime": "2^127"
+          },
+          "notes": ""
+        },
+        {
+          "id": "aes-256",
+          "name": "AES-256",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "9889",
+            "clifford": "2^152.3",
+            "tGates": "2^150.3",
+            "tDepth": "2^144.3"
+          },
+          "physical": {
+            "physicalQubits": "2^27",
+            "runtime": "2^159"
+          },
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "gift",
+      "name": "GIFT",
+      "color": "#f59e0b",
+      "variants": [
+        {
+          "id": "gift-64",
+          "name": "GIFT-64",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        },
+        {
+          "id": "gift-128",
+          "name": "GIFT-128",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "present",
+      "name": "PRESENT",
+      "color": "#f43f5e",
+      "variants": [
+        {
+          "id": "present-80",
+          "name": "PRESENT-80",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        },
+        {
+          "id": "present-128",
+          "name": "PRESENT-128",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "default",
+      "name": "DEFAULT",
+      "color": "#10b981",
+      "variants": [
+        {
+          "id": "default-128",
+          "name": "DEFAULT-128",
+          "attack": "Grover",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "ecc",
+      "name": "ECC",
+      "color": "#a855f7",
+      "variants": [
+        {
+          "id": "p-256",
+          "name": "P-256",
+          "attack": "Shor",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        },
+        {
+          "id": "p-384",
+          "name": "P-384",
+          "attack": "Shor",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        },
+        {
+          "id": "p-521",
+          "name": "P-521",
+          "attack": "Shor",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "binary-ecc",
+      "name": "Binary ECC",
+      "color": "#ec4899",
+      "variants": [
+        {
+          "id": "b-163",
+          "name": "B-163",
+          "attack": "Shor",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        },
+        {
+          "id": "b-233",
+          "name": "B-233",
+          "attack": "Shor",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        },
+        {
+          "id": "b-283",
+          "name": "B-283",
+          "attack": "Shor",
+          "logical": {
+            "qubits": "",
+            "clifford": "",
+            "tGates": "",
+            "tDepth": ""
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": ""
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<div id="root"></div>
+<div class="boot-loader">· loading ·</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- REACT APP — you generally don't need to touch anything below  -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useMemo } = React;
+const {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, ScatterChart, Scatter, Cell,
+} = Recharts;
+
+// ── Read embedded data ───────────────────────────────────────────
+const SITE_CONFIG = JSON.parse(document.getElementById('site-config').textContent);
+const FALLBACK_DATA = JSON.parse(document.getElementById('cipher-data').textContent);
+
+// Resolve data source synchronously:
+// 1) data.js (loaded via <script> tag — works in file:// too)
+// 2) embedded fallback inside this HTML
+function resolveCipherData() {
+  if (typeof window.CIPHER_DATA !== 'undefined'
+      && window.CIPHER_DATA
+      && Array.isArray(window.CIPHER_DATA.ciphers)) {
+    return { data: window.CIPHER_DATA, source: 'data.js' };
+  }
+  console.warn('data.js not loaded — using embedded fallback');
+  return { data: FALLBACK_DATA, source: 'embedded fallback' };
+}
+
+// ── Detect edit mode ────────────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+const IS_EDIT = urlParams.get('edit') === '1';
+
+// ── Value parsing helpers ────────────────────────────────────────
+const parseValue = (str) => {
+  if (str === null || str === undefined) return null;
+  const s = String(str).trim();
+  if (!s) return null;
+  let m = s.match(/^2\s*(?:\^|\*\*)\s*(-?\d+(?:\.\d+)?)$/);
+  if (m) return Math.pow(2, parseFloat(m[1]));
+  m = s.match(/^(-?\d+(?:\.\d+)?)\s*[\*x·]\s*2\s*(?:\^|\*\*)\s*(-?\d+(?:\.\d+)?)$/);
+  if (m) return parseFloat(m[1]) * Math.pow(2, parseFloat(m[2]));
+  const n = parseFloat(s.replace(/,/g, ''));
+  return isFinite(n) ? n : null;
+};
+const formatValue = (n) => {
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  if (n === 0) return '0';
+  // Beyond JS safe-integer range (≈9 × 10^15), comma display becomes meaningless
+  // (trailing digits are zeros from float precision loss). Fall back to power-of-2.
+  if (Math.abs(n) > Number.MAX_SAFE_INTEGER) {
+    return `2^${Math.log2(Math.abs(n)).toFixed(2)}`;
+  }
+  return Math.round(n).toLocaleString();
+};
+const formatLog2 = (n) => (!n || !isFinite(n) || n <= 0) ? null : Math.log2(n);
+const formatPlain = (n) => {
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  if (n === 0) return '0';
+  return Math.round(n).toLocaleString();
+};
+const formatAbbrev = (n) => {
+  if (!isFinite(n)) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e15) return n.toExponential(1).replace('+', '');  // 1.0e15, 2.0e24, ...
+  if (a >= 1e12) return (n / 1e12).toFixed(1) + 'T';   // tera
+  if (a >= 1e9)  return (n / 1e9).toFixed(1) + 'B';
+  if (a >= 1e6)  return (n / 1e6).toFixed(1) + 'M';
+  if (a >= 1e3)  return (n / 1e3).toFixed(1) + 'K';
+  return Math.round(n).toString();
+};
+
+// ── Resource field metadata ──────────────────────────────────────
+const LOGICAL_FIELDS = [
+  { key: 'qubits',           label: 'Logical Qubits',    unit: 'qubits', linear: true },
+  { key: 'clifford',         label: 'Clifford Gates',    unit: 'gates' },
+  { key: 'tGates',           label: 'T Gates',           unit: 'gates' },
+  { key: 'tDepth',           label: 'T-depth' },
+  { key: 'measurementGates', label: 'Measurement Gates', unit: 'gates', editOnly: true },
+];
+const PHYSICAL_FIELDS = [
+  { key: 'physicalQubits', label: 'Physical Qubits', unit: 'qubits',  linear: true },
+  { key: 'runtime',        label: 'Runtime',         unit: 'seconds' },
+];
+
+// ── QLDPC physical-cost model (Webster et al., arXiv:2602.11457) ─────
+// Two hardware presets keyed to physical error rate p. Each carries the
+// GB-code parameters from Table I and success-prob params from Table III.
+const HARDWARE_PRESETS = [
+  {
+    id:    'p1e-3',
+    label: 'p=10⁻³',
+    full:  'p=10⁻³ (d=24, GB[510,16,24])',
+    p:     1e-3,
+    d:     24,
+    k:     16,
+    n_pb:  1620,
+    n_me:  8694,
+    d_t:   26,        // d + 2
+    p_r:   0.06,      // §V.B.2: ≈6% reject rate
+    p_L:   4e-16,     // Table III
+    p_T:   1e-11,     // §V.B.2 / §VI.B.4
+  },
+  {
+    id:    'p1e-4',
+    label: 'p=10⁻⁴',
+    full:  'p=10⁻⁴ (d=16, GB[254,14,16])',
+    p:     1e-4,
+    d:     16,
+    k:     14,
+    n_pb:  860,
+    n_me:  2128,
+    d_t:   18,        // d + 2
+    p_r:   0.0015,    // §V.B.2: 15·p = 0.15%
+    p_L:   1e-19,     // Table III
+    p_T:   1e-11,
+  },
+];
+
+const CYCLE_TIMES = [
+  { id: '1us',   label: '1µs',   tc: 1e-6  },
+  { id: '10us',  label: '10µs',  tc: 10e-6 },
+  { id: '100us', label: '100µs', tc: 100e-6 },
+  { id: '1ms',   label: '1ms',   tc: 1e-3  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// PHYSICAL-COST MODELS
+//
+// Two error-correction codes are supported, selected via `physicalCode` UI:
+//
+//   • QLDPC (GB code)  — Webster et al., arXiv:2602.11457
+//     Shor-targeted variants only (Prime ECC, Binary ECC).
+//     Inputs: logical qubits, T-gates, measurement gates.
+//
+//   • Surface code     — ePrint 2026/106 §5.2 + arXiv:1603.09383 §7
+//     Applies to BOTH Grover and Shor variants.
+//     Inputs: logical qubits, T-gates, Clifford gates, T-depth.
+//
+// Common return shape: { physicalQubits, runtime, ...diagnostics, source }
+// or null if the variant lacks the required inputs.
+// ═══════════════════════════════════════════════════════════════
+
+// ── QLDPC physical-cost (Eq. 22, expected runtime = oneShot / p_S) ─────
+function computeQldpcPhysical(variant, tc, hw) {
+  if (variant?.attack !== 'Shor') return null;
+  if (!hw) return null;
+
+  const ov = variant?.qldpcInputs;
+  const overrideReady =
+    ov && String(ov.qubits ?? '').trim() !== ''
+       && String(ov.tGates ?? '').trim() !== ''
+       && String(ov.measurementGates ?? '').trim() !== '';
+  const src = overrideReady ? ov : variant?.logical;
+  const source = overrideReady ? 'qldpc' : 'logical';
+
+  const q  = parseValue(src?.qubits);
+  const tg = parseValue(src?.tGates);
+  const rawMg = src?.measurementGates;
+  if (rawMg === undefined || rawMg === null || String(rawMg).trim() === '') return null;
+  const mg = parseValue(rawMg);
+  if (mg === null || !isFinite(mg)) return null;
+  if (!q || q <= 0 || !tg || tg <= 0) return null;
+
+  const { k, n_pb, n_me, d_t, p_r, p_L, p_T } = hw;
+  const corrected = tg / (1 - p_r) + q + mg;
+  const physicalQubits = n_pb * Math.ceil(q / k) + n_me;
+  const oneShot = corrected * d_t * tc;
+  const logPs = q * corrected * Math.log1p(-p_L) + tg * Math.log1p(-p_T);
+  const pS = Math.exp(logPs);
+  const runtime = pS > 0 ? oneShot / pS : Infinity;
+
+  return { physicalQubits, runtime, oneShot, pS, source };
+}
+
+// ── Surface code physical-cost ─────────────────────────────────
+//
+// Iteratively determines distillation code distances given an output infidelity
+// target (p_out = 1 / t_count) and a physical error rate p_in.
+function estimateCodeDistances(p_out, p_in, epsilon = 1.0) {
+  const p_g = p_in / 10.0;
+  const d_list = [];
+  let p = p_out;
+  let outerSafety = 0;
+  while (outerSafety++ < 300) {
+    const target_rhs = (epsilon * p) / (1 + epsilon);
+    let d_i = 1;
+    let innerSafety = 0;
+    while (innerSafety++ < 1000) {
+      const lhs = 192 * d_i * Math.pow(100 * p_g, (d_i + 1) / 2);
+      if (lhs < target_rhs) break;
+      d_i += 1;
+    }
+    d_list.push(d_i);
+    p = Math.pow(p / (35 * (1 + epsilon)), 1 / 3);
+    if (p > p_in) break;
+  }
+  return d_list;
+}
+
+function computeSurfacePhysical(variant, tc, p_in) {
+  // Surface code applies to BOTH Grover and Shor variants. Uses variant.logical
+  // values exclusively (no override block); requires qubits, tGates, clifford, tDepth.
+  const L = variant?.logical;
+  if (!L) return null;
+  const t_count = parseValue(L.tGates);
+  const q_count = parseValue(L.qubits);
+  const c_count = parseValue(L.clifford);
+  const t_depth = parseValue(L.tDepth);
+  if (!t_count || t_count <= 0) return null;
+  if (!q_count || q_count <= 0) return null;
+  if (!c_count || c_count <= 0) return null;
+  if (!t_depth || t_depth <= 0) return null;
+
+  const p_out = 1.0 / t_count;
+  const distances = estimateCodeDistances(p_out, p_in);
+  const Lcount = distances.length;
+  if (Lcount === 0) return null;
+
+  // Build distillation-tower layers (i=1 ↔ innermost, i=Lcount ↔ outermost)
+  const layers = [];
+  for (let i = 1; i <= Lcount; i++) {
+    const d_i = distances[Lcount - i];
+    const n_dist_i = 16 * Math.pow(15, Lcount - i);
+    const total_i = (2.5 * 1.25 * d_i * d_i) * n_dist_i;
+    const cycle_i = 10 * d_i;
+    layers.push({ d: d_i, n_dist: n_dist_i, total_qubits: total_i, cycles: cycle_i });
+  }
+
+  const surface_cycle = layers.reduce((s, li) => s + li.cycles, 0);
+  let pipeline = 1;
+  if (Lcount >= 2) {
+    pipeline = Math.max(Math.floor(layers[0].total_qubits / layers[1].total_qubits), 1);
+  }
+
+  const T_c_d = Math.ceil(t_count / t_depth);
+  const Factory = Math.ceil(T_c_d / pipeline);
+  const T_phys = layers[0].total_qubits * Factory;
+
+  // Clifford-region distance d_cliff
+  const threshold = 1.0 / c_count;
+  let d_cliff = 1;
+  let cliffSafety = 0;
+  while (cliffSafety++ < 1000) {
+    if (Math.pow(p_in / 0.0125, (d_cliff + 1) / 2) < threshold) break;
+    d_cliff += 1;
+  }
+  const C_phys = q_count * 2.5 * 1.25 * d_cliff * d_cliff;
+
+  const physicalQubits = C_phys + T_phys;
+  const magic_gen_time = tc * surface_cycle;
+  const runtime = (t_count / pipeline) * magic_gen_time / Factory;
+
+  return { physicalQubits, runtime, L: Lcount, distances, d_cliff, source: 'logical' };
+}
+
+// ── Dispatcher ────────────────────────────────────────────────
+function computePhysical(variant, tc, hw, code) {
+  if (code === 'surface') return computeSurfacePhysical(variant, tc, hw?.p);
+  return computeQldpcPhysical(variant, tc, hw);
+}
+
+// Human-readable runtime — escalates: s → min → h → days → months → years
+//   thresholds: 60s | 60min | 24h | 30d | 12m
+function formatRuntime(seconds) {
+  if (seconds === null || seconds === undefined || !isFinite(seconds)) return '—';
+  if (seconds <= 0) return '—';
+  const MIN = 60;
+  const HR = 60 * MIN;          // 3,600 s
+  const DAY = 24 * HR;          // 86,400 s
+  const MONTH = 30 * DAY;       // 2,592,000 s  (≈30 days/month)
+  const YEAR = 365 * DAY;       // 31,536,000 s — matches Python summary convention
+  let value, unit;
+  if      (seconds < MIN)    { value = seconds;        unit = 's'; }
+  else if (seconds < HR)     { value = seconds / MIN;  unit = 'min'; }
+  else if (seconds < DAY)    { value = seconds / HR;   unit = 'h'; }
+  else if (seconds < MONTH)  { value = seconds / DAY;  unit = 'days'; }
+  else if (seconds < YEAR)   { value = seconds / MONTH; unit = 'months'; }
+  else                       { value = seconds / YEAR;  unit = 'years'; }
+  // For huge year counts, switch to scientific then 2^X
+  if (unit === 'years' && value > 1e6) {
+    if (value > Number.MAX_SAFE_INTEGER) {
+      return `2^${Math.log2(value).toFixed(1)} years`;
+    }
+    return `${value.toExponential(2)} years`;
+  }
+  return `${value.toFixed(value >= 100 ? 0 : 2)} ${unit}`;
+}
+
+// ── Inline icon component (no external icon lib) ─────────────────
+const Icon = ({ name, size = 14, className = '' }) => {
+  const I = {
+    plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+    x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+    check: <polyline points="20 6 9 17 4 12"/>,
+    trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></>,
+    edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+    chevronR: <polyline points="9 18 15 12 9 6"/>,
+    chevronD: <polyline points="6 9 12 15 18 9"/>,
+    db: <><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></>,
+    chart: <><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></>,
+    sparkles: <><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M5.6 18.4l2-2M16.4 7.6l2-2"/></>,
+    reset: <><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></>,
+    download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+    code: <><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>,
+    lock: <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+    info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>,
+    sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,
+    moon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>,
+    menu: <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>,
+    cpu: <><rect x="5" y="5" width="14" height="14" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><line x1="9" y1="2" x2="9" y2="5"/><line x1="15" y1="2" x2="15" y2="5"/><line x1="9" y1="19" x2="9" y2="22"/><line x1="15" y1="19" x2="15" y2="22"/><line x1="19" y1="9" x2="22" y2="9"/><line x1="19" y1="15" x2="22" y2="15"/><line x1="2" y1="9" x2="5" y2="9"/><line x1="2" y1="15" x2="5" y2="15"/></>,
+    wave: <path d="M2 12 q 2.5 -7 5 0 t 5 0 t 5 0 t 5 0"/>,
+    atom: <><circle cx="12" cy="12" r="1.5"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></>,
+    swap: <><line x1="3" y1="8" x2="21" y2="8"/><polyline points="16 3 21 8 16 13"/><line x1="3" y1="16" x2="21" y2="16"/><polyline points="8 11 3 16 8 21"/></>,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {I[name]}
+    </svg>
+  );
+};
+
+// ── Read-aware input ────────────────────────────────────────────
+const ResourceInput = ({ label, value, onChange, unit, readOnly, linear }) => (
+  <div>
+    <div className="flex items-center justify-between mb-2">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-white/50 font-mono">{label}</div>
+      {unit && <span className="text-[10px] font-mono text-white/30">{unit}</span>}
+    </div>
+    <div className="relative">
+      <input
+        type="text"
+        value={value || ''}
+        onChange={(e) => onChange && onChange(e.target.value)}
+        readOnly={readOnly}
+        disabled={readOnly}
+        placeholder={readOnly ? '—' : '0  ·  2^80  ·  1.2e24'}
+        className={`bare-input font-mono text-lg pb-1.5 border-b transition-colors ${
+          readOnly
+            ? 'border-white/8 text-white/85'
+            : 'border-white/10 focus:border-cyan-400/60'
+        }`}
+      />
+      {value && parseValue(value) !== null && (
+        <div className="mt-1 text-[10px] font-mono text-white/40">
+          ≈ {linear ? formatPlain(parseValue(value)) : formatValue(parseValue(value))}
+          {!linear && parseValue(value) > 0 && (
+            <span className="ml-2 text-white/25">
+              log₂ = {formatLog2(parseValue(value))?.toFixed(2)}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+// ── Variant block ───────────────────────────────────────────────
+const VariantBlock = ({ variant, onChange, onDelete, accent, readOnly }) => {
+  const [editingName, setEditingName] = useState(false);
+  const [tempName, setTempName] = useState(variant.name);
+  const upd = (k, v) => onChange({ ...variant, [k]: v });
+  const updL = (k, v) => onChange({ ...variant, logical: { ...variant.logical, [k]: v } });
+  const updP = (k, v) => onChange({ ...variant, physical: { ...variant.physical, [k]: v } });
+  const updQ = (k, v) => onChange({ ...variant, qldpcInputs: { ...variant.qldpcInputs, [k]: v } });
+
+  return (
+    <div className="fade-in-up rounded-lg border border-white/8 bg-white/[0.02] overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-white/8"
+        style={{ background: `linear-gradient(90deg, ${accent}10 0%, transparent 60%)` }}>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-1.5 h-6 rounded-full shrink-0" style={{ background: accent }} />
+          {editingName && !readOnly ? (
+            <div className="flex items-center gap-2 flex-1">
+              <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { upd('name', tempName); setEditingName(false); }
+                  if (e.key === 'Escape') { setTempName(variant.name); setEditingName(false); }
+                }}
+                className="bare-input font-mono text-2xl flex-1" autoFocus />
+              <button onClick={() => { upd('name', tempName); setEditingName(false); }}
+                className="p-1 rounded text-cyan-400 hover:bg-white/5"><Icon name="check" /></button>
+            </div>
+          ) : (
+            <>
+              <h3 className="font-mono text-2xl text-white/95 truncate">{variant.name}</h3>
+              {variant.attack && (
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] px-2 py-0.5 rounded border border-white/10 text-white/50">
+                  {variant.attack}
+                </span>
+              )}
+              {!readOnly && (
+                <button onClick={() => { setTempName(variant.name); setEditingName(true); }}
+                  className="p-1 rounded text-white/30 hover:text-white/70 transition-colors">
+                  <Icon name="edit" size={12} />
+                </button>
+              )}
+            </>
+          )}
+        </div>
+        {!readOnly && (
+          <button onClick={onDelete}
+            className="p-1.5 rounded text-white/30 hover:text-red-400 hover:bg-white/5 transition-colors">
+            <Icon name="trash" />
+          </button>
+        )}
+      </div>
+
+      <div className="p-5 space-y-6">
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-white/40">── Logical Resources</div>
+            <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+            {LOGICAL_FIELDS.filter(f => !readOnly || !f.editOnly).map(f => (
+              <ResourceInput key={f.key} label={f.label} unit={f.unit} linear={f.linear}
+                value={variant.logical?.[f.key] || ''} onChange={(v) => updL(f.key, v)} readOnly={readOnly} />
+            ))}
+          </div>
+        </div>
+
+        {/* QLDPC override inputs — appear when variant carries `qldpcInputs` (Prime ECC),
+            Edit mode only. Not displayed in read-only view. Used by computePhysical() as
+            the data source for physical-cost estimation when all three fields are set;
+            otherwise the regular `logical` values are used. */}
+        {!readOnly && variant.qldpcInputs !== undefined && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-300/70">
+                ── QLDPC Inputs <span className="text-white/30 normal-case tracking-normal">(override values used for QLDPC physical-cost calculation)</span>
+              </div>
+              <div className="flex-1 h-px bg-gradient-to-r from-amber-300/20 to-transparent" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+              <ResourceInput label="Logical Qubits"    unit="qubits" linear={true}
+                value={variant.qldpcInputs?.qubits || ''}           onChange={(v) => updQ('qubits', v)} readOnly={false} />
+              <ResourceInput label="T Gates"           unit="gates"
+                value={variant.qldpcInputs?.tGates || ''}           onChange={(v) => updQ('tGates', v)} readOnly={false} />
+              <ResourceInput label="Measurement Gates" unit="gates"
+                value={variant.qldpcInputs?.measurementGates || ''} onChange={(v) => updQ('measurementGates', v)} readOnly={false} />
+            </div>
+            <div className="font-mono text-[10px] text-white/30 mt-2 italic">
+              Fill all three to override the logical values above when computing physical cost. If any is empty, the values above are used.
+            </div>
+          </div>
+        )}
+
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-white/40">
+              ── Physical Resources <span className="text-white/25 normal-case tracking-normal">— QLDPC code (Shor-targeted variants only)</span>
+            </div>
+            <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+          </div>
+          {(() => {
+            const sections = HARDWARE_PRESETS.map(hw => ({
+              hw,
+              estimates: CYCLE_TIMES.map(ct => ({ ct, est: computeQldpcPhysical(variant, ct.tc, hw) })),
+            }));
+            const anyComputable = sections.some(s => s.estimates.some(e => e.est !== null));
+            if (!anyComputable) {
+              const reason = variant.attack !== 'Shor'
+                ? 'QLDPC estimation is applied only to Shor-targeted variants (Prime ECC, Binary ECC).'
+                : 'Logical Qubits, T Gates, and Measurement Gates required to compute physical cost.';
+              return (
+                <div className="font-mono text-xs text-white/40 italic">{reason}</div>
+              );
+            }
+            return (
+              <div className="space-y-6">
+                {sections.map(({ hw, estimates }) => {
+                  const physicalQubits = estimates.find(e => e.est)?.est.physicalQubits;
+                  const pS = estimates.find(e => e.est)?.est.pS;
+                  if (physicalQubits === undefined) return null;
+                  return (
+                    <div key={hw.id} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-300/70">{hw.label}</div>
+                        <div className="font-mono text-[10px] text-white/30 normal-case tracking-normal">{hw.full}</div>
+                      </div>
+                      <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
+                        <div className="flex items-baseline gap-3">
+                          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 w-32">Physical Qubits</div>
+                          <div className="font-mono text-lg text-white/90">{formatPlain(physicalQubits)}</div>
+                        </div>
+                        {pS !== undefined && pS > 0 && (
+                          <div className="flex items-baseline gap-3">
+                            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">p_S · E[shots]</div>
+                            <div className="font-mono text-sm text-white/70">
+                              {pS.toFixed(6)} · {(1/pS).toFixed(4)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 mb-2">
+                          Expected Runtime by cycle time (tc)
+                          <span className="normal-case tracking-normal text-white/25 ml-2">— one-shot / p_S</span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {estimates.map(({ ct, est }) => (
+                            <div key={ct.id} className="rounded-md border border-white/8 bg-white/[0.02] px-3 py-2">
+                              <div className="font-mono text-[10px] uppercase tracking-wider text-white/40">tc = {ct.label}</div>
+                              <div className="font-mono text-sm text-white/90 mt-1">{est ? formatRuntime(est.runtime) : '—'}</div>
+                              <div className="font-mono text-[10px] text-white/30 mt-0.5">{est ? `${formatValue(est.runtime)} s` : ''}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-white/40">
+              ── Physical Resources <span className="text-white/25 normal-case tracking-normal">— Surface code (all variants)</span>
+            </div>
+            <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+          </div>
+          {(() => {
+            const sections = HARDWARE_PRESETS.map(hw => ({
+              hw,
+              estimates: CYCLE_TIMES.map(ct => ({ ct, est: computeSurfacePhysical(variant, ct.tc, hw.p) })),
+            }));
+            const anyComputable = sections.some(s => s.estimates.some(e => e.est !== null));
+            if (!anyComputable) {
+              return (
+                <div className="font-mono text-xs text-white/40 italic">
+                  Logical Qubits, T Gates, Clifford Gates, and T-depth required for surface-code estimation.
+                </div>
+              );
+            }
+            return (
+              <div className="space-y-6">
+                {sections.map(({ hw, estimates }) => {
+                  const first = estimates.find(e => e.est)?.est;
+                  if (!first) return null;
+                  const physicalQubits = first.physicalQubits;
+                  const Lcount = first.L;
+                  const distances = first.distances;
+                  const d_cliff = first.d_cliff;
+                  return (
+                    <div key={hw.id} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-300/70">{hw.label}</div>
+                        <div className="font-mono text-[10px] text-white/30 normal-case tracking-normal">{hw.full}</div>
+                      </div>
+                      <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
+                        <div className="flex items-baseline gap-3">
+                          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 w-32">Physical Qubits</div>
+                          <div className="font-mono text-lg text-white/90">{formatPlain(physicalQubits)}</div>
+                        </div>
+                        <div className="flex items-baseline gap-3">
+                          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">Layers · distances</div>
+                          <div className="font-mono text-sm text-white/70">
+                            L={Lcount} · [{distances.join(', ')}] · d_cliff={d_cliff}
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 mb-2">
+                          Runtime by cycle time (tc)
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {estimates.map(({ ct, est }) => (
+                            <div key={ct.id} className="rounded-md border border-white/8 bg-white/[0.02] px-3 py-2">
+                              <div className="font-mono text-[10px] uppercase tracking-wider text-white/40">tc = {ct.label}</div>
+                              <div className="font-mono text-sm text-white/90 mt-1">{est ? formatRuntime(est.runtime) : '—'}</div>
+                              <div className="font-mono text-[10px] text-white/30 mt-0.5">{est ? `${formatValue(est.runtime)} s` : ''}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+
+        {(variant.notes || !readOnly) && (
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-white/40 mb-2">── Notes / Reference</div>
+            <input
+              type="text"
+              value={variant.notes || ''}
+              onChange={(e) => upd('notes', e.target.value)}
+              readOnly={readOnly}
+              disabled={readOnly}
+              placeholder={readOnly ? '—' : 'Paper reference, attack model, assumptions…'}
+              className="bare-input font-mono text-xs text-white/70 pb-1 border-b border-white/10"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Tooltip ────────────────────────────────────────────────────
+// We force colors via inline style + CSS variables so that the tooltip
+// is always legible regardless of where Recharts mounts it in the DOM,
+// and regardless of any Tailwind utility cascade.
+// Visual style matches the scatter-chart tooltip: large coloured variant
+// name → small grey cipher-family label → one row per metric.
+const ChartTooltip = ({ active, payload, label, logScale }) => {
+  if (!active || !payload?.length) return null;
+  // First payload carries the row, which holds cipher (family) + color.
+  const row = payload[0].payload || {};
+  const variantColor = row.color || payload[0].color;
+  const variantName  = label || row.name;
+  const familyName   = row.cipher;
+  return (
+    <div
+      className="rounded-lg border backdrop-blur-md px-4 py-3 shadow-2xl"
+      style={{
+        background:  'var(--tooltip-bg)',
+        borderColor: 'var(--tooltip-border)',
+        color:       'var(--tooltip-value)',
+      }}>
+      <div className="font-mono text-lg" style={{ color: variantColor }}>{variantName}</div>
+      {familyName && familyName !== variantName && (
+        <div className="font-mono text-xs mb-2" style={{ color: 'var(--tooltip-label)' }}>{familyName}</div>
+      )}
+      <div className="font-mono text-xs space-y-1 mt-1" style={{ color: 'var(--tooltip-name)' }}>
+        {payload.map((p, i) => {
+          const rawKey = `_raw_${p.dataKey}`;
+          const raw = p.payload?.[rawKey];
+          const isRuntime = p.dataKey === 'runtime';
+          const display = (raw !== undefined && raw !== null)
+            ? (isRuntime ? formatRuntime(raw) : formatValue(raw))
+            : formatValue(p.value);
+          return (
+            <div key={i}>
+              {p.name}: <span style={{ color: 'var(--tooltip-value)' }}>{display}</span>
+              {isRuntime && raw !== undefined && raw !== null && raw >= 60 && (
+                <span style={{ color: 'var(--tooltip-sub)' }}> ({formatValue(raw)} s)</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ── Tab & segmented buttons ────────────────────────────────────
+const Tab = ({ active, onClick, icon, children }) => (
+  <button onClick={onClick}
+    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-mono transition-all ${
+      active ? 'bg-white/[0.06] text-white border border-white/15'
+             : 'text-white/50 hover:text-white/80 hover:bg-white/[0.02] border border-transparent'}`}>
+    <Icon name={icon} />{children}
+  </button>
+);
+const SegBtn = ({ active, onClick, children }) => (
+  <button onClick={onClick}
+    className={`flex-1 px-3 py-1.5 rounded-md text-sm font-mono transition-all ${
+      active ? 'bg-cyan-400/10 text-cyan-300 border border-cyan-400/30'
+             : 'text-white/50 hover:text-white/80 border border-white/10 hover:border-white/20'}`}>
+    {children}
+  </button>
+);
+const ControlGroup = ({ label, children }) => (
+  <div>
+    <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5">{label}</div>
+    <div className="flex items-stretch gap-1">{children}</div>
+  </div>
+);
+
+// ── Custom X-axis tick that shows ONE label per cipher group ──
+// Used when cipherFilter === 'all' to avoid 33 overlapping variant labels.
+// Slight rotation (-25°) keeps adjacent single-variant groups from colliding.
+const CipherGroupTick = ({ x, y, payload, chartData, ciphers }) => {
+  const variant = chartData.find(d => d.name === payload.value);
+  if (!variant) return null;
+  const sameCipher = chartData.filter(d => d.cipher === variant.cipher);
+  const idx = sameCipher.findIndex(d => d.name === variant.name);
+  const mid = Math.floor((sameCipher.length - 1) / 2);
+  if (idx !== mid) return null;     // only label the middle bar of each group
+  const cipher = ciphers.find(c => c.name === variant.cipher);
+  const color = cipher?.color || 'rgba(255,255,255,0.7)';
+  // Steeper -45° rotation + textAnchor="end" prevents adjacent labels from
+  // overlapping horizontally when many cipher families are shown in ALL mode.
+  return (
+    <g transform={`translate(${x}, ${y + 12})`}>
+      <text
+        x={0} y={0}
+        textAnchor="end"
+        transform="rotate(-45)"
+        fill={color}
+        style={{ fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: 500 }}>
+        {variant.cipher}
+      </text>
+    </g>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────
+// PAGE COMPONENTS — Grover, Shor, References
+// Render-only; no shared state with App other than the passed-in cipher list.
+// ─────────────────────────────────────────────────────────────────
+
+const PageShell = ({ kicker, title, lead, children }) => (
+  <div className="space-y-8 max-w-3xl">
+    <div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyan-300/70 mb-2">{kicker}</div>
+      <h1 className="font-mono text-4xl text-white mb-4">{title}</h1>
+      {lead && <p className="font-mono text-sm text-white/60 leading-relaxed">{lead}</p>}
+    </div>
+    <div className="space-y-6">{children}</div>
+  </div>
+);
+
+const Section = ({ heading, children }) => (
+  <section className="space-y-3">
+    <h2 className="font-mono font-bold text-sm text-white pb-2 border-b border-white/8">{heading}</h2>
+    <div className="space-y-3 font-mono text-sm text-white/75 leading-relaxed">{children}</div>
+  </section>
+);
+
+const MathBlock = ({ children }) => (
+  <div className="px-4 py-3 rounded-md border border-white/10 bg-white/[0.02] font-mono text-sm text-cyan-200/85 text-center">
+    {children}
+  </div>
+);
+
+const Pill = ({ color, children }) => (
+  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono"
+    style={{ background: `${color}18`, color, border: `1px solid ${color}40` }}>
+    <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+    {children}
+  </span>
+);
+
+// Figure: a quantum circuit diagram with a caption. The PNGs are line drawings
+// on transparent / white background; in dark mode we invert the colors so the
+// black lines/text become white-on-dark and stay legible.
+const Figure = ({ src, alt, caption }) => (
+  <figure className="my-2 rounded-lg border border-white/10 bg-white/[0.02] p-5">
+    <div className="flex items-center justify-center">
+      <img
+        src={src}
+        alt={alt}
+        className="max-w-full h-auto figure-circuit"
+        style={{ maxHeight: '320px' }}
+      />
+    </div>
+    {caption && (
+      <figcaption className="mt-3 pt-3 border-t border-white/8 font-mono text-[11px] text-white/55 text-center leading-relaxed">
+        {caption}
+      </figcaption>
+    )}
+  </figure>
+);
+
+// Inline SVG figure — same wrapper as <Figure>, but takes SVG (or any JSX) as
+// children instead of an image src. Use this for theme-aware schematic diagrams
+// (currentColor in the SVG will inherit the page text colour automatically).
+const InlineFigure = ({ caption, children }) => (
+  <figure className="my-2 rounded-lg border border-white/10 bg-white/[0.02] p-5">
+    <div className="flex items-center justify-center text-white/85">
+      {children}
+    </div>
+    {caption && (
+      <figcaption className="mt-3 pt-3 border-t border-white/8 font-mono text-[11px] text-white/55 text-center leading-relaxed">
+        {caption}
+      </figcaption>
+    )}
+  </figure>
+);
+
+// One bibliography entry. Numbered, hanging-indent style typical of academic refs.
+// If `link` is provided, the title becomes a clickable anchor.
+const RefEntry = ({ index, authors, title, venue, year, link }) => (
+  <li className="flex gap-3 font-mono text-[13px] text-white/75 leading-relaxed">
+    <span className="text-white/35 shrink-0 w-6 text-right">[{index}]</span>
+    <div className="flex-1">
+      <span className="text-white/80">{authors}.</span>{' '}
+      {link ? (
+        <a href={link} target="_blank" rel="noopener noreferrer"
+          className="text-cyan-300 hover:text-cyan-200 underline decoration-cyan-300/30 hover:decoration-cyan-200/60 transition-colors">
+          {title}
+        </a>
+      ) : (
+        <span className="italic text-white/85">{title}</span>
+      )}
+      .{venue && (<><br /><span className="text-white/55">{venue}{year ? `, ${year}` : ''}.</span></>)}
+    </div>
+  </li>
+);
+
+// Numbered reference list inside a Section. Resets numbering for each list.
+const ReferenceList = ({ entries }) => (
+  <ol className="space-y-3 list-none p-0 m-0">
+    {entries.map((e, i) => <RefEntry key={i} index={i + 1} {...e} />)}
+  </ol>
+);
+
+function GroverPage({ ciphers }) {
+  // Group all ciphers attacked by some Grover variant
+  const groverGroups = [
+    { attack: 'Grover + Exhaustive key search', label: 'Symmetric ciphers',  desc: 'Key recovery by searching the keyspace.' },
+    { attack: 'Grover + Preimage search',       label: 'Hash functions',     desc: 'Preimage / second-preimage search.' },
+    { attack: 'Grover + ISD',                   label: 'Code-based PQC',     desc: 'Information-set decoding accelerated by Grover.' },
+    { attack: 'Grover + NV sieve (SVP problem)', label: 'Lattice-based PQC', desc: 'Quantum lattice sieve attacking the SVP.' },
+  ];
+  const matched = groverGroups.map(g => ({
+    ...g,
+    list: ciphers.filter(c => c.variants.some(v => v.attack === g.attack)),
+  })).filter(g => g.list.length > 0);
+
+  return (
+    <PageShell
+      kicker="Quantum attack model"
+      title="Grover's Algorithm"
+      lead="Grover's algorithm searches an unstructured space of N candidates in O(√N) queries to a quantum oracle, providing a quadratic speed-up over the classical O(N) brute-force search. Against cryptographic primitives, it reduces the effective security level by half."
+    >
+      <Section heading="The Algorithm in Brief">
+        <p>
+          Given a function <em>f : {'{0,1}'}<sup>n</sup> → {'{0,1}'}</em> with a unique marked input <em>x*</em> (i.e. <em>f(x*) = 1</em>),
+          Grover's algorithm finds <em>x*</em> with high probability using approximately ⌊π/4 · √N⌋ oracle calls,
+          where <em>N = 2<sup>n</sup></em>.
+        </p>
+        <MathBlock>Queries ≈ (π/4) · 2<sup>n/2</sup>  ·  speed-up: quadratic vs. classical 2<sup>n</sup></MathBlock>
+        <p>
+          The algorithm alternates two unitary operations: an <span className="text-white">oracle</span> that flips the phase of the marked state,
+          and a <span className="text-white">diffusion operator</span> that reflects amplitudes about their mean. After O(√N) iterations the
+          amplitude on |x*⟩ approaches 1.
+        </p>
+      </Section>
+
+      <Section heading="The Oracle for Symmetric-Key Attacks">
+        <p>
+          For block ciphers the oracle is built around a single known plaintext-ciphertext pair <em>(m, c)</em>.
+          On a candidate key <em>|k⟩</em> it computes the encryption <em>Enc<sub>k</sub>(m)</em>, XORs the result against the target ciphertext <em>c</em>
+          into a phase ancilla initialised to <em>|−⟩</em>, then uncomputes the encryption with <em>Enc<sup>†</sup></em>.
+          The diagram below shows this oracle in its standard reversible form — the dashed box is one full Grover iteration's <em>U<sub>f</sub></em>.
+        </p>
+        <Figure
+          src="assets/Grover_Oracle.png"
+          alt="Quantum circuit for a Grover oracle U_f on a block cipher: Enc on (k,m), CNOT into a phase-kickback ancilla, then Enc-dagger."
+          caption="Grover oracle for symmetric-key search. The encryption Enc and its inverse Enc† act on the key register |k⟩ and message register |m⟩; the marked condition Enc_k(m) = c is reflected into the phase ancilla |−⟩ via a controlled-NOT. The cost reported in the Resource Estimator (T-gates, T-depth, Clifford count) is dominated by Enc / Enc†."
+        />
+      </Section>
+
+      <Section heading="Security Impact">
+        <p>
+          For an n-bit key, classical exhaustive search costs <em>2<sup>n</sup></em> evaluations. Grover reduces this to <em>2<sup>n/2</sup></em>:
+          an AES-128 key, classically 2<sup>128</sup>-secure, faces a quantum attack cost of 2<sup>64</sup> oracle calls.
+          To compensate, NIST recommends doubling the symmetric key size for post-quantum security
+          (AES-256 retains ≈ 2<sup>128</sup> quantum security).
+        </p>
+        <p className="text-white/55">
+          The 2<sup>n/2</sup> count is an oracle-call bound, not a time estimate. Each oracle invocation requires
+          coherent evaluation of the cipher's full encryption circuit — the cost reflected in the "Logical Resources"
+          and "Physical Resources" tabs of the Resource Estimator.
+        </p>
+      </Section>
+
+      <Section heading="Targets in This Catalogue">
+        <p className="text-white/60">
+          The following cipher families are analyzed under Grover-style attacks. Each variant has its own logical-resource
+          estimate (qubits, T-gates, T-depth, Clifford gates) captured in the Resource Estimator.
+        </p>
+        {matched.map(g => (
+          <div key={g.attack} className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
+            <div className="flex items-baseline justify-between mb-1.5 flex-wrap gap-2">
+              <div className="font-mono text-sm text-white">{g.label}</div>
+              <div className="font-mono text-[10px] text-white/40">{g.attack}</div>
+            </div>
+            <div className="font-mono text-xs text-white/55 mb-3">{g.desc}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {g.list.map(c => <Pill key={c.id} color={c.color}>{c.name}</Pill>)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section heading="What Changes per Primitive Type">
+        <p>
+          Symmetric ciphers (AES, ARIA, LEA, CHAM, …): the oracle evaluates the
+          encryption circuit on a candidate key; Grover then amplifies the key matching the known plaintext-ciphertext pair.
+        </p>
+        <p>
+          Hash functions (SHA-2, SHA-3, ASCON-HASH, …): the oracle marks inputs that hash to a target digest.
+          A 256-bit hash offers 2<sup>128</sup> quantum preimage resistance.
+        </p>
+        <p>
+          Code-based PQC (Classic McEliece, HQC, BIKE): Grover accelerates the
+          inner search step of information-set decoding (ISD). Effective complexity is <em>2<sup>α·n/2</sup></em> for
+          some constant α that depends on the ISD variant.
+        </p>
+        <p>
+          Lattice-based PQC (Kyber, Dilithium, SMAUG-T, HAETAE): applies inside
+          the Nguyen-Vidick (NV) lattice sieve to find the shortest vector. The sieve's classical inner-loop search of
+          2<sup>0.292·d</sup> candidates per iteration becomes 2<sup>0.265·d</sup> under Grover.
+        </p>
+      </Section>
+    </PageShell>
+  );
+}
+
+function ShorPage({ ciphers }) {
+  const shorCiphers = ciphers.filter(c => c.variants.some(v => v.attack === 'Shor'));
+
+  return (
+    <PageShell
+      kicker="Quantum attack model"
+      title="Shor's Algorithm"
+      lead="Shor's algorithm solves the integer factorization and discrete-logarithm problems in polynomial time on a quantum computer — completely breaking RSA, Diffie-Hellman, and elliptic-curve cryptography. The attack model is fundamentally different from Grover: it uses quantum Fourier transforms to find the period of a modular function, not unstructured search."
+    >
+      <Section heading="The Algorithm in Brief">
+        <p>
+          The core problem is <em>period finding</em>: given a function <em>f(x) = a<sup>x</sup> mod N</em>, find the
+          smallest <em>r {'>'} 0</em> such that <em>f(x+r) = f(x)</em>. Shor showed this period can be extracted from a
+          quantum Fourier transform, and that factoring N (or computing discrete logarithms) reduces to period finding.
+        </p>
+        <MathBlock>Complexity: O((log N)<sup>3</sup>)  ·  classical best: sub-exponential (e.g. GNFS)</MathBlock>
+        <p>
+          Unlike Grover's quadratic speed-up, Shor's exponential speed-up means that increasing key size
+          provides no escape. RSA-2048, ECC-256, and discrete-log instances are all polynomially attackable.
+        </p>
+      </Section>
+
+      <Section heading="Two Flavours: Factoring and Discrete Log">
+        <p>
+          Integer factoring (RSA): given a composite <em>N = p·q</em>, factor it.
+          Shor's algorithm reduces this to finding the multiplicative order of a random base mod N.
+        </p>
+        <p>
+          Discrete logarithm (DH, ECC): given a group <em>G</em>, a generator
+          <em>g</em>, and an element <em>h = g<sup>x</sup></em>, find <em>x</em>. The quantum subroutine is essentially the
+          same — period finding of a function defined over the group.
+        </p>
+        <Figure
+          src="assets/Shor.png"
+          alt="Quantum circuit for Shor's algorithm on the elliptic-curve discrete logarithm problem: two H-prepared registers, controlled scalar additions [2^i]P and [2^i]Q on a point register, ending with two QFTs and measurement."
+          caption="Shor's algorithm for the elliptic-curve discrete log (ECDLP). Two index registers |k⟩, |ℓ⟩ are Hadamard-prepared, each controlling a tower of scalar multiplications +[2^i]P and +[2^i]Q on the curve-point register |O⟩. The two QFTs reveal the period that encodes the discrete logarithm. The Resource Estimator's ECC entries (Prime ECC qubit/depth-opt, Binary ECC) report the logical cost of this circuit family."
+        />
+        <p className="text-white/60">
+          For elliptic-curve cryptography, the group operation is scalar multiplication on an elliptic curve. The
+          resource estimates in this catalogue reflect that ECC instances at security level k bits need on the order of
+          <em>~ 2k</em> logical qubits and <em>O(k<sup>3</sup>)</em> Toffoli gates.
+        </p>
+      </Section>
+
+      <Section heading="Targets in This Catalogue">
+        <p className="text-white/60">
+          All public-key primitives based on factoring or discrete-log fall to Shor. This catalogue includes:
+        </p>
+        <div className="space-y-2">
+          {shorCiphers.map(c => (
+            <div key={c.id} className="flex items-baseline justify-between gap-3 px-4 py-3 rounded-md border border-white/10 bg-white/[0.02]">
+              <Pill color={c.color}>{c.name}</Pill>
+              <div className="font-mono text-xs text-white/55">{c.variants.length} variants</div>
+            </div>
+          ))}
+        </div>
+        <p className="text-white/60 pt-2">
+          The Resource Estimator's QLDPC physical-cost model is calibrated specifically for
+          Shor-targeted variants — its parameters (block sizes, magic-engine width, code distances) come from the
+          factoring-and-discrete-log analysis in Webster et al. (arXiv:2602.11457). The Surface-code model applies more
+          broadly to both Grover and Shor variants.
+        </p>
+      </Section>
+
+      <Section heading="Why Post-Quantum?">
+        <p>
+          Because Shor's polynomial-time speed-up cannot be patched by larger keys, the cryptographic community has
+          standardized lattice-, code-, and hash-based replacements (Kyber, Dilithium, Classic McEliece, SPHINCS+).
+          These rely on problems for which no polynomial-time quantum algorithm is known.
+        </p>
+        <p className="text-white/60">
+          However, these new schemes are <em>not</em> immune to all quantum attacks — they remain subject to Grover-style
+          generic attacks on their underlying search problems (ISD for code-based, lattice sieves for lattice-based),
+          covered on the Grover page.
+        </p>
+      </Section>
+    </PageShell>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// OVERVIEW PAGE
+// High-level introduction: what this site does, which quantum algorithms it
+// covers, and the estimation methods used to turn logical circuit costs into
+// physical fault-tolerant resource numbers.
+// ─────────────────────────────────────────────────────────────────
+function OverviewPage() {
+  const MetricRow = ({ name, children, last }) => (
+    <div className={`px-4 py-2.5 flex gap-5 ${last ? '' : 'border-b border-white/8'}`}>
+      <div className="font-mono text-[12.5px] text-white/85 w-28 shrink-0 pt-1">{name}</div>
+      <div className="text-white/75 text-[13.5px] leading-relaxed flex-1">{children}</div>
+    </div>
+  );
+  return (
+    <PageShell
+      kicker="Background and estimation methods"
+      title="Overview"
+      lead="This site estimates the quantum resources needed to break a broad range of cryptographic primitives — symmetric-key ciphers, hash functions, asymmetric-key ciphers, and post-quantum candidates. For each variant it reports the logical cost (logical qubits, T-gates, Clifford gates, and T-depth) and turns that into physical-level numbers (physical qubits and runtime) under fault-tolerant error correction."
+    >
+      <Section heading="The Quantum Threat to Cryptography">
+        <p>
+          Two quantum algorithms — Shor's and{' '}
+          Grover's — threaten essentially every classical cryptographic
+          primitive in use today. Shor solves integer factorisation and the discrete logarithm in polynomial
+          time, breaking RSA, Diffie–Hellman, and ECC outright. Grover gives a square-root speed-up to
+          brute-force search, effectively halving the security level of symmetric ciphers and hash preimages.
+        </p>
+        <p className="text-white/60">
+          The open question is no longer <em>whether</em> such attacks work in principle, but{' '}
+          <em>how much hardware</em> a quantum adversary needs — and <em>how long it has to run</em> — before any
+          specific scheme falls. This site computes that, primitive by primitive.
+        </p>
+      </Section>
+
+      <Section heading="The Estimation Pipeline">
+        <p>
+          For each cipher variant the site traces the cost of a quantum attack from the algorithmic choice all the
+          way down to physical cost. The pipeline has six stages:
+        </p>
+        <InlineFigure caption="Each cipher entry stores the logical cost of its quantum attack. The estimator wraps that circuit in a fault-tolerant error-correcting code and reports the resulting physical-qubit count and runtime.">
+          <svg viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg"
+               style={{ width: '100%', maxHeight: '200px' }}
+               fontFamily="JetBrains Mono, monospace">
+            <text x="390" y="20" fontSize="9" letterSpacing="2.5" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.4">ESTIMATION PIPELINE</text>
+
+            {/* Six stages. Input + output highlighted in cyan; middle stages muted. */}
+            {[
+              { label: 'CIPHER',        x:  15, accent: true,  items: [['AES', 0.85], ['ECC', 0.85], ['SHA-2/3', 0.85], ['···', 0.45]] },
+              { label: 'Q-CIRCUIT',     x: 143, accent: false, items: [['oracle', 0.85], ['mod-arith', 0.85], ['···', 0.45]] },
+              { label: 'ALGORITHM',     x: 271, accent: false, items: [['Grover', 0.85], ['or', 0.4], ['Shor', 0.85]] },
+              { label: 'LOGICAL COST',  x: 399, accent: false, items: [['qubits', 0.85], ['T-gates', 0.85], ['Cliffords', 0.85], ['depth', 0.85]] },
+              { label: 'ERROR CORR.',   x: 527, accent: false, items: [['Surface', 0.85], ['or', 0.4], ['QLDPC', 0.85]] },
+              { label: 'PHYSICAL COST', x: 655, accent: true,  items: [['physical', 0.85], ['qubits', 0.85], ['runtime', 0.85]] },
+            ].map((stage, si) => {
+              const stroke = stage.accent ? '#22d3ee' : 'currentColor';
+              const sOp    = stage.accent ? 0.55 : 0.35;
+              const fOp    = stage.accent ? 0.06 : 0.02;
+              const n      = stage.items.length;
+              const lineH  = n >= 4 ? 16 : 18;
+              const fSize  = n >= 4 ? 10 : 11;
+              const block  = (n - 1) * lineH;
+              const startY = 80 + (80 - block) / 2;
+              return (
+                <g key={si}>
+                  <rect x={stage.x} y="45" width="110" height="110" rx="6"
+                        stroke={stroke} strokeOpacity={sOp}
+                        fill={stroke} fillOpacity={fOp} />
+                  <text x={stage.x + 55} y="67" fontSize="9" letterSpacing="2.5" textAnchor="middle"
+                        fill={stroke} fillOpacity="0.95">{stage.label}</text>
+                  {stage.items.map(([txt, op], i) => (
+                    <text key={i} x={stage.x + 55} y={startY + i * lineH}
+                          fontSize={fSize} textAnchor="middle"
+                          fill="currentColor" fillOpacity={op}>{txt}</text>
+                  ))}
+                </g>
+              );
+            })}
+
+            {/* Arrows between consecutive stages — 5 gaps of 18 px each */}
+            {[125, 253, 381, 509, 637].map((x, i) => (
+              <g key={i}>
+                <line x1={x} y1="100" x2={x + 16} y2="100"
+                      stroke="currentColor" strokeOpacity="0.4" strokeWidth="1" />
+                <polyline points={`${x + 12},96 ${x + 16},100 ${x + 12},104`}
+                      fill="none" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1" />
+              </g>
+            ))}
+          </svg>
+        </InlineFigure>
+        <p className="text-white/60">
+          The first four stages are <em>logical</em> (the cipher realised as a quantum attack circuit and what it
+          costs to run); the last two are <em>physical</em> (what real hardware needs once error correction wraps
+          the circuit).
+        </p>
+      </Section>
+
+      <Section heading="From Logical to Physical">
+        <p>
+          The logical half of the pipeline records what a noise-free
+          quantum computer would need to run the attack. The site reports four such quantities per variant, all
+          derived from published circuit-level analyses:
+        </p>
+        <div className="rounded-md border border-white/10 bg-white/[0.02] overflow-hidden">
+          <MetricRow name="Qubits">
+            How many logical qubits the algorithm uses.
+          </MetricRow>
+          <MetricRow name="T-gates">
+            Non-Clifford gates in the circuit. T-count is the standard quantum circuit complexity metric.
+          </MetricRow>
+          <MetricRow name="Clifford gates">
+            Hadamard, phase, CNOT, and Pauli — together they form the Clifford group.
+          </MetricRow>
+          <MetricRow name="T-depth" last>
+            Longest sequential chain of T-gates; always ≤ T-count.
+          </MetricRow>
+        </div>
+        <p>
+          A fault-tolerant error-correcting code then turns these logical numbers into physical ones — both the
+          qubit count and the runtime depend on the code and its parameters.
+        </p>
+        <p>
+          Two codes are covered here: surface codes and{' '}
+          QLDPC codes. The dedicated pages under{' '}
+          <em>Physical Estimation</em> in the left menu describe each pipeline in detail.
+        </p>
+      </Section>
+
+      <Section heading="Using This Site">
+        <p>
+          The Resource Estimator (left menu) is the main interactive view:
+          pick a cipher, inspect its logical cost, switch between surface and QLDPC physical models, and read off
+          the physical qubits and runtime. The algorithm pages explain what each circuit does at the gate level;
+          the physical-estimation pages explain exactly which formulas the estimator applies and how the published
+          constants feed into them.
+        </p>
+      </Section>
+    </PageShell>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PHYSICAL ESTIMATION — Surface codes
+// What the estimator's `computeSurfacePhysical` function actually does.
+// Scope: inputs it reads, the formulas it applies, what it returns.
+// ─────────────────────────────────────────────────────────────────
+function SurfaceCodesPage() {
+  return (
+    <PageShell
+      kicker="Physical estimation · Surface codes"
+      title="Surface codes"
+      lead="Surface codes apply to both Grover and Shor variants. The estimator turns each T-gate into a magic-state distillation cost and sizes a separate Clifford region for the rest of the circuit. The output is the total physical-qubit footprint and a runtime that depends on T-depth."
+    >
+      <Section heading="Surface Code in Brief">
+        <p>
+          A surface code arranges physical qubits on a 2D lattice. Data qubits{' '}
+          hold the encoded logical information; measure qubits at plaquette centers
+          continuously read X and Z stabilizers, producing an error syndrome from which errors are decoded. The{' '}
+          <em>code distance d</em> is the minimum weight of a logical operator — larger <em>d</em> tolerates more
+          errors at the cost of more physical qubits per logical qubit. The figure below shows the standard
+          rotated layout at <em>d = 5</em>; the formulas the estimator actually uses are introduced in the
+          sections that follow.
+        </p>
+        <InlineFigure caption="A rotated surface-code logical qubit at distance d = 5. Data qubits (yellow) sit at lattice vertices; measure qubits (blue) at bulk plaquette centers and at boundary half-stabilizers (the rounded bumps along each edge) read X and Z stabilizers.">
+          <svg viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg"
+               style={{ width: '100%', maxHeight: '270px' }}
+               fontFamily="JetBrains Mono, monospace">
+            {/* Top boundary X half-stabilizers — at cols 0, 2 (above bulk X stabs) */}
+            {[0, 2].map(col => (
+              <rect key={`t-${col}`}
+                    x={103 + col * 36} y={47}
+                    width="30" height="14" rx="7"
+                    fill="#3b82f6" fillOpacity="0.32" />
+            ))}
+            {/* Bottom boundary X half-stabilizers — at cols 1, 3 */}
+            {[1, 3].map(col => (
+              <rect key={`b-${col}`}
+                    x={103 + col * 36} y={203}
+                    width="30" height="14" rx="7"
+                    fill="#3b82f6" fillOpacity="0.32" />
+            ))}
+            {/* Left boundary Z half-stabilizers — at rows 1, 3 */}
+            {[1, 3].map(row => (
+              <rect key={`l-${row}`}
+                    x={86} y={63 + row * 36}
+                    width="14" height="30" rx="7"
+                    fill="#93c5fd" fillOpacity="0.2" />
+            ))}
+            {/* Right boundary Z half-stabilizers — at rows 0, 2 */}
+            {[0, 2].map(row => (
+              <rect key={`r-${row}`}
+                    x={250} y={63 + row * 36}
+                    width="14" height="30" rx="7"
+                    fill="#93c5fd" fillOpacity="0.2" />
+            ))}
+
+            {/* Bulk plaquettes — checkerboard X/Z stabilizers */}
+            {Array.from({ length: 4 }).map((_, row) =>
+              Array.from({ length: 4 }).map((_, col) => {
+                const isX = (row + col) % 2 === 0;
+                return (
+                  <rect key={`p-${row}-${col}`}
+                        x={103 + col * 36} y={63 + row * 36}
+                        width="30" height="30" rx="5"
+                        fill={isX ? '#3b82f6' : '#93c5fd'}
+                        fillOpacity={isX ? 0.32 : 0.2} />
+                );
+              })
+            )}
+
+            {/* Data qubits — yellow, 5×5 */}
+            {Array.from({ length: 5 }).map((_, row) =>
+              Array.from({ length: 5 }).map((_, col) => (
+                <circle key={`dq-${row}-${col}`}
+                        cx={100 + col * 36} cy={60 + row * 36} r="6.5"
+                        fill="#facc15" fillOpacity="0.95"
+                        stroke="#f59e0b" strokeOpacity="0.7" strokeWidth="0.8" />
+              ))
+            )}
+
+            {/* Bulk measure qubits — blue, 4×4 at plaquette centers */}
+            {Array.from({ length: 4 }).map((_, row) =>
+              Array.from({ length: 4 }).map((_, col) => (
+                <circle key={`mq-${row}-${col}`}
+                        cx={118 + col * 36} cy={78 + row * 36} r="5.5"
+                        fill="#60a5fa" fillOpacity="0.95"
+                        stroke="#2563eb" strokeOpacity="0.7" strokeWidth="0.8" />
+              ))
+            )}
+
+            {/* Boundary measure qubits — at the centers of the 8 half-stabilizers */}
+            {[
+              { cx: 118, cy: 54 }, { cx: 190, cy: 54 },   // top
+              { cx: 154, cy: 210 }, { cx: 226, cy: 210 }, // bottom
+              { cx: 93, cy: 114 }, { cx: 93, cy: 186 },   // left
+              { cx: 257, cy: 78 }, { cx: 257, cy: 150 },  // right
+            ].map((p, i) => (
+              <circle key={`bm-${i}`}
+                      cx={p.cx} cy={p.cy} r="5.5"
+                      fill="#60a5fa" fillOpacity="0.95"
+                      stroke="#2563eb" strokeOpacity="0.7" strokeWidth="0.8" />
+            ))}
+
+            {/* Legend */}
+            <g transform="translate(360, 70)">
+              <text x="0" y="0" fontSize="10" letterSpacing="2.5"
+                    fill="currentColor" fillOpacity="0.45">LEGEND</text>
+
+              <circle cx="10" cy="22" r="6.5" fill="#facc15" fillOpacity="0.95"
+                      stroke="#f59e0b" strokeOpacity="0.7" strokeWidth="0.8" />
+              <text x="30" y="26" fontSize="11"
+                    fill="currentColor" fillOpacity="0.85">Data qubit</text>
+
+              <circle cx="10" cy="46" r="5.5" fill="#60a5fa" fillOpacity="0.95"
+                      stroke="#2563eb" strokeOpacity="0.7" strokeWidth="0.8" />
+              <text x="30" y="50" fontSize="11"
+                    fill="currentColor" fillOpacity="0.85">Measure qubit</text>
+
+              <rect x="3" y="64" width="14" height="14" rx="3"
+                    fill="#3b82f6" fillOpacity="0.32" />
+              <text x="30" y="74" fontSize="11"
+                    fill="currentColor" fillOpacity="0.85">X stabilizer</text>
+
+              <rect x="3" y="86" width="14" height="14" rx="3"
+                    fill="#93c5fd" fillOpacity="0.2" />
+              <text x="30" y="96" fontSize="11"
+                    fill="currentColor" fillOpacity="0.85">Z stabilizer</text>
+            </g>
+
+            {/* Annotation — purely structural, no formula reference */}
+            <g transform="translate(360, 190)">
+              <text x="0" y="0" fontSize="10" letterSpacing="2.5"
+                    fill="currentColor" fillOpacity="0.45">PATCH SHOWN</text>
+              <text x="0" y="22" fontSize="12"
+                    fill="currentColor" fillOpacity="0.85">Code distance d = 5</text>
+              <text x="0" y="42" fontSize="12"
+                    fill="currentColor" fillOpacity="0.85">Rotated layout</text>
+            </g>
+          </svg>
+        </InlineFigure>
+      </Section>
+
+      <Section heading="What the Estimator Reads">
+        <p>
+          From each variant's <em>logical</em> block the estimator pulls four numbers:
+          logical qubits <em>N<sub>log</sub></em>, T-gate count <em>T<sub>c</sub></em>,
+          Clifford count <em>C<sub>g</sub></em>, and T-depth <em>T<sub>d</sub></em>.
+          From the UI it takes a physical error rate <em>p</em> and a code cycle time <em>t<sub>c</sub></em>;
+          the per-gate error is fixed at <em>p<sub>g</sub> = p/10</em>. If any of the four logical inputs
+          is missing or zero, no surface-code estimate is produced.
+        </p>
+      </Section>
+
+      <Section heading="Magic-State Distillation">
+        <p>
+          T-gates are produced by chained 15-to-1 Reed-Muller distillation. The estimator picks the
+          number of layers and a code distance <em>d<sub>i</sub></em> at each layer so the output
+          infidelity drops below <em>1 / T<sub>c</sub></em>. At each layer it solves
+        </p>
+        <MathBlock>
+          192·d<sub>i</sub>·(100·p<sub>g</sub>)<sup>(d<sub>i</sub>+1)/2</sup>  &lt;  ε·p<sub>out,i</sub> / (1 + ε)
+        </MathBlock>
+        <p>
+          for the smallest integer <em>d<sub>i</sub></em>, then propagates
+          <em> p<sub>out,i+1</sub> = (p<sub>out,i</sub>/(35(1+ε)))<sup>1/3</sup></em> to the next layer.
+          A logical qubit at distance <em>d</em> uses
+        </p>
+        <MathBlock>
+          Q<sub>phys</sub>(d) = 2.5 × 1.25 × d²
+        </MathBlock>
+      </Section>
+
+      <Section heading="Parallel Factories">
+        <p>
+          One distillation factory occupies the outermost layer's footprint and produces
+          <em> N<sub>par</sub> = ⌊Q<sub>bot</sub> / Q<sub>top</sub>⌋</em> states per round
+          (a round is <em>C<sub>dist</sub> = 10·Σ d<sub>i</sub></em> surface cycles). To keep up
+          with the circuit's T-depth the estimator instantiates
+        </p>
+        <MathBlock>
+          N<sub>fact</sub> = ⌈(T<sub>c</sub> / T<sub>d</sub>) / N<sub>par</sub>⌉
+        </MathBlock>
+        <p>
+          factories in parallel. Their combined footprint is the T-region cost
+          <em> Q<sub>T</sub> = Q<sub>bot</sub> · N<sub>fact</sub></em>.
+        </p>
+      </Section>
+
+      <Section heading="Clifford Region">
+        <p>
+          Clifford gates live outside the distillation pipeline and run at their own code
+          distance <em>d<sub>c</sub></em>, the smallest integer satisfying
+        </p>
+        <MathBlock>
+          (p / 0.0125)<sup>(d<sub>c</sub>+1)/2</sup>  &lt;  1 / C<sub>g</sub>
+        </MathBlock>
+        <p>
+          giving a footprint of <em>Q<sub>C</sub> = N<sub>log</sub> · Q<sub>phys</sub>(d<sub>c</sub>)</em>.
+        </p>
+      </Section>
+
+      <Section heading="What It Returns">
+        <InlineFigure caption="Schematic — areas are not drawn to scale; the actual Q_T / Q_C ratio varies widely by variant and can favor either contribution.">
+          <svg viewBox="0 0 680 290" xmlns="http://www.w3.org/2000/svg"
+               style={{ width: '100%', maxHeight: '270px' }}
+               fontFamily="JetBrains Mono, monospace">
+            {/* T-region container */}
+            <rect x="20" y="30" width="295" height="200" rx="8"
+                  fill="#22d3ee" fillOpacity="0.04"
+                  stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="1" />
+            <text x="38" y="56" fontSize="10" letterSpacing="2"
+                  fill="#22d3ee" fillOpacity="0.95">T-REGION (Q_T)</text>
+
+            {/* Factory grid 6x4 representing N_fact factories */}
+            {Array.from({ length: 4 }).map((_, row) =>
+              Array.from({ length: 6 }).map((_, col) => (
+                <rect key={`f-${row}-${col}`}
+                      x={38 + col * 42} y={75 + row * 28}
+                      width="34" height="22" rx="2"
+                      fill="#22d3ee" fillOpacity="0.12"
+                      stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="0.8" />
+              ))
+            )}
+
+            <text x="38" y="218" fontSize="10.5" fill="currentColor" fillOpacity="0.7">
+              N_fact factories · each Q_bot physical qubits
+            </text>
+
+            {/* Plus sign between regions */}
+            <text x="332" y="146" fontSize="26" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.45">+</text>
+
+            {/* Clifford region container — same width as T-region for visual balance */}
+            <rect x="350" y="30" width="310" height="200" rx="8"
+                  fill="currentColor" fillOpacity="0.02"
+                  stroke="currentColor" strokeOpacity="0.35" strokeWidth="1" />
+            <text x="368" y="56" fontSize="10" letterSpacing="2"
+                  fill="currentColor" fillOpacity="0.8">CLIFFORD REGION (Q_C)</text>
+
+            {/* N_log qubit dots — denser grid hints at "many small qubits" */}
+            {Array.from({ length: 7 }).map((_, row) =>
+              Array.from({ length: 14 }).map((_, col) => (
+                <circle key={`dt-${row}-${col}`}
+                        cx={380 + col * 19} cy={82 + row * 18} r="2.2"
+                        fill="currentColor" fillOpacity="0.5" />
+              ))
+            )}
+
+            <text x="368" y="218" fontSize="10.5" fill="currentColor" fillOpacity="0.7">
+              N_log qubits at code distance d_c
+            </text>
+
+            {/* Total formula */}
+            <text x="340" y="270" fontSize="13" textAnchor="middle"
+                  fill="#22d3ee">Q_total = Q_T + Q_C</text>
+          </svg>
+        </InlineFigure>
+        <p>
+          Two numbers — surfaced in the main view as Physical Qubits
+          and Runtime:
+        </p>
+        <MathBlock>
+          Q<sub>total</sub> = Q<sub>T</sub> + Q<sub>C</sub>
+        </MathBlock>
+        <MathBlock>
+          t<sub>total</sub> = (T<sub>c</sub> / (N<sub>par</sub>·N<sub>fact</sub>)) · C<sub>dist</sub> · t<sub>c</sub>
+        </MathBlock>
+        <p className="text-white/60">
+          Clifford execution overlaps with distillation, so it does not stretch the wall clock.
+          Lowering <em>t<sub>c</sub></em> shortens the runtime linearly without changing the qubit count.
+        </p>
+      </Section>
+    </PageShell>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PHYSICAL ESTIMATION — QLDPC codes
+// What the estimator's `computeQldpcPhysical` function actually does.
+// Scope: inputs it reads, block structure, runtime + success probability.
+// ─────────────────────────────────────────────────────────────────
+function QldpcCodesPage() {
+  return (
+    <PageShell
+      kicker="Physical estimation · QLDPC codes"
+      title="QLDPC codes"
+      lead="The QLDPC pipeline applies to Shor variants only. It packs many logical qubits into a single processing block, so the physical-qubit footprint is roughly an order of magnitude smaller than the surface-code estimate, paid for in runtime."
+    >
+      <Section heading="What the Estimator Reads">
+        <p>
+          From each Shor variant the estimator reads three numbers: logical qubits <em>N</em>,
+          T-gate count <em>N<sub>T</sub></em>, and measurement-gate count <em>N<sub>M</sub></em>
+          (this last value is QLDPC-specific — the surface pipeline does not use it). The hardware
+          preset and code cycle time <em>t<sub>c</sub></em> come from the UI; if any of the three
+          inputs is missing, no QLDPC estimate is produced.
+        </p>
+        <div className="overflow-x-auto rounded-lg border border-white/10 bg-white/[0.02]">
+          <table className="w-full text-left font-mono text-[12.5px]">
+            <thead className="text-white/55 border-b border-white/10">
+              <tr>
+                <th className="px-4 py-2.5 font-medium">Preset</th>
+                <th className="px-4 py-2.5 font-medium">GB code</th>
+                <th className="px-4 py-2.5 font-medium">n<sub>pb</sub></th>
+                <th className="px-4 py-2.5 font-medium">n<sub>me</sub></th>
+                <th className="px-4 py-2.5 font-medium">k</th>
+                <th className="px-4 py-2.5 font-medium">d<sub>t</sub></th>
+                <th className="px-4 py-2.5 font-medium">p<sub>r</sub></th>
+              </tr>
+            </thead>
+            <tbody className="text-white/80">
+              <tr className="border-b border-white/8">
+                <td className="px-4 py-2.5 text-white/55">p = 10⁻³</td>
+                <td className="px-4 py-2.5">GB[510, 16, 24]</td>
+                <td className="px-4 py-2.5">1,620</td>
+                <td className="px-4 py-2.5">8,694</td>
+                <td className="px-4 py-2.5">16</td>
+                <td className="px-4 py-2.5">26</td>
+                <td className="px-4 py-2.5">0.06</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 text-white/55">p = 10⁻⁴</td>
+                <td className="px-4 py-2.5">GB[254, 14, 16]</td>
+                <td className="px-4 py-2.5">860</td>
+                <td className="px-4 py-2.5">2,128</td>
+                <td className="px-4 py-2.5">14</td>
+                <td className="px-4 py-2.5">18</td>
+                <td className="px-4 py-2.5">0.0015</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
+      <Section heading="Block Layout">
+        <p>
+          Each processing block holds <em>k</em> logical qubits in <em>n<sub>pb</sub></em>
+          physical qubits, paired with a magic engine of <em>n<sub>me</sub></em> physical qubits.
+          The estimator sizes a single processing unit large enough for all logical qubits:
+        </p>
+        <MathBlock>
+          Q<sub>phys</sub> = n<sub>pb</sub> · ⌈N / k⌉ + n<sub>me</sub>
+        </MathBlock>
+        <InlineFigure caption="A single processing unit: ⌈N/k⌉ blocks (each packing k logical qubits into n_pb physical qubits) plus one magic engine of n_me physical qubits that supplies T-states.">
+          <svg viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg"
+               style={{ width: '100%', maxHeight: '230px' }}
+               fontFamily="JetBrains Mono, monospace">
+            {/* Title */}
+            <text x="340" y="20" fontSize="9" letterSpacing="3" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.4">SINGLE PROCESSING UNIT</text>
+
+            {/* Block 1 */}
+            <rect x="30" y="40" width="110" height="120" rx="6"
+                  fill="#22d3ee" fillOpacity="0.05"
+                  stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="1" />
+            <text x="85" y="62" fontSize="9" letterSpacing="2" textAnchor="middle"
+                  fill="#22d3ee" fillOpacity="0.95">BLOCK 1</text>
+            {Array.from({ length: 4 }).map((_, row) =>
+              Array.from({ length: 4 }).map((_, col) => (
+                <circle key={`b1-${row}-${col}`}
+                        cx={48 + col * 18} cy={82 + row * 14} r="2"
+                        fill="#22d3ee" fillOpacity="0.7" />
+              ))
+            )}
+            <text x="85" y="150" fontSize="9" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.65">k logical · n_pb phys</text>
+
+            {/* Block 2 */}
+            <rect x="155" y="40" width="110" height="120" rx="6"
+                  fill="#22d3ee" fillOpacity="0.05"
+                  stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="1" />
+            <text x="210" y="62" fontSize="9" letterSpacing="2" textAnchor="middle"
+                  fill="#22d3ee" fillOpacity="0.95">BLOCK 2</text>
+            {Array.from({ length: 4 }).map((_, row) =>
+              Array.from({ length: 4 }).map((_, col) => (
+                <circle key={`b2-${row}-${col}`}
+                        cx={173 + col * 18} cy={82 + row * 14} r="2"
+                        fill="#22d3ee" fillOpacity="0.7" />
+              ))
+            )}
+            <text x="210" y="150" fontSize="9" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.65">k logical · n_pb phys</text>
+
+            {/* Ellipsis */}
+            <text x="295" y="108" fontSize="20" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.45">···</text>
+
+            {/* Block ⌈N/k⌉ */}
+            <rect x="330" y="40" width="120" height="120" rx="6"
+                  fill="#22d3ee" fillOpacity="0.05"
+                  stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="1" />
+            <text x="390" y="62" fontSize="9" letterSpacing="2" textAnchor="middle"
+                  fill="#22d3ee" fillOpacity="0.95">BLOCK ⌈N/k⌉</text>
+            {Array.from({ length: 4 }).map((_, row) =>
+              Array.from({ length: 4 }).map((_, col) => (
+                <circle key={`bn-${row}-${col}`}
+                        cx={353 + col * 18} cy={82 + row * 14} r="2"
+                        fill="#22d3ee" fillOpacity="0.7" />
+              ))
+            )}
+            <text x="390" y="150" fontSize="9" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.65">k logical · n_pb phys</text>
+
+            {/* Connector to magic engine */}
+            <line x1="450" y1="100" x2="490" y2="100"
+                  stroke="currentColor" strokeOpacity="0.35" strokeDasharray="3 3" />
+
+            {/* Magic engine */}
+            <rect x="490" y="40" width="160" height="120" rx="6"
+                  fill="currentColor" fillOpacity="0.025"
+                  stroke="currentColor" strokeOpacity="0.4" strokeWidth="1" />
+            <text x="570" y="62" fontSize="9" letterSpacing="2" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.8">MAGIC ENGINE</text>
+            <text x="570" y="115" fontSize="20" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.75">|T⟩</text>
+            <text x="570" y="150" fontSize="9" textAnchor="middle"
+                  fill="currentColor" fillOpacity="0.65">n_me physical</text>
+
+            {/* Formula below */}
+            <text x="340" y="210" fontSize="13" textAnchor="middle"
+                  fill="#22d3ee">Q_phys = n_pb · ⌈N / k⌉ + n_me</text>
+          </svg>
+        </InlineFigure>
+        <p className="text-white/60">
+          A space-time trade-off (multiple parallel units) is possible but not exposed in this UI —
+          the baseline is one unit.
+        </p>
+      </Section>
+
+      <Section heading="Cycles, Rejection, Runtime">
+        <p>
+          Each T-state injection and each logical measurement counts as one logical cycle. T-cycles
+          can be rejected by the magic engine with probability <em>p<sub>r</sub></em>, so the estimator
+          inflates the T workload:
+        </p>
+        <MathBlock>
+          L<sub>corr</sub> = N<sub>T</sub> / (1 − p<sub>r</sub>) + N<sub>M</sub>
+        </MathBlock>
+        <p>
+          The logical cycle time is <em>t<sub>ℓ</sub> = d<sub>t</sub>·t<sub>c</sub></em>, giving a
+          one-shot runtime
+        </p>
+        <MathBlock>
+          t<sub>shot</sub> = L<sub>corr</sub> · d<sub>t</sub> · t<sub>c</sub>
+        </MathBlock>
+      </Section>
+
+      <Section heading="Success Probability and Expected Runtime">
+        <p>
+          A single run succeeds only if no logical error fires on any qubit-cycle and no T-injection
+          fails. Using a logical error rate <em>p<sub>L</sub></em> (per qubit-cycle) and a T-injection
+          error <em>p<sub>T</sub></em>:
+        </p>
+        <MathBlock>
+          p<sub>S</sub> = (1 − p<sub>L</sub>)<sup>N · L<sub>corr</sub></sup> · (1 − p<sub>T</sub>)<sup>N<sub>T</sub></sup>
+        </MathBlock>
+        <p>
+          Repetition under failure is captured by the expected runtime, surfaced in the main view as
+           Runtime:
+        </p>
+        <MathBlock>
+          t<sub>exp</sub> = t<sub>shot</sub> / p<sub>S</sub>
+        </MathBlock>
+        <p className="text-white/60">
+          The estimator's runtime scales with <em>N<sub>T</sub></em> (a serial cost), not with T-depth.
+          Circuits optimised for low T-depth therefore do not see the same speedup here as they do
+          under surface codes.
+        </p>
+      </Section>
+    </PageShell>
+  );
+}
+
+function ReferencesPage() {
+  return (
+    <PageShell
+      kicker="Source publications"
+      title="References"
+      lead="Logical resource estimates, physical-cost models, and cipher-specific quantum circuits are drawn from the publications below."
+    >
+      <Section heading="Symmetric Ciphers — Grover Circuits">
+        <ReferenceList entries={[
+          {
+            authors: "Kyungbae Jang, Anubhab Baksi, Hyunji Kim, Gyeongju Song, Hwajeong Seo, and Anupam Chattopadhyay",
+            title:   "Quantum Analysis of AES",
+            venue:   "IACR Communications in Cryptology, 2(1)",
+            year:    "2025",
+            link:    "https://doi.org/10.62056/ay11zo-3y",
+          },
+          {
+            authors: "Yujin Oh, Kyungbae Jang, and Hwajeong Seo",
+            title:   "Improved Quantum Analysis of ARIA",
+            venue:   "Cryptology ePrint Archive, Paper 2024/1986",
+            year:    "2024",
+            link:    "https://eprint.iacr.org/2024/1986",
+          },
+          {
+            authors: "Yujin Oh, Kyungbae Jang, Yujin Yang, and Hwajeong Seo",
+            title:   "Optimized Quantum Implementation of SEED",
+            venue:   "Cryptology ePrint Archive, Paper 2023/1566",
+            year:    "2023",
+            link:    "https://eprint.iacr.org/2023/1566",
+          },
+          {
+            authors: "Kyungbae Jang, Yujin Oh, Minwoo Lee, Dukyoung Kim, and Hwajeong Seo",
+            title:   "Depth Optimized Quantum Circuits for HIGHT and LEA",
+            venue:   "Cryptology ePrint Archive, Paper 2024/1221 (Silicon Valley Cybersecurity Conference 2024)",
+            year:    "2024",
+            link:    "https://eprint.iacr.org/2024/1221",
+          },
+          {
+            authors: "Kyungbae Jang, Gyeongju Song, Hyunjun Kim, Hyeokdong Kwon, Hyunji Kim, and Hwajeong Seo",
+            title:   "Parallel Quantum Addition for Korean Block Ciphers",
+            venue:   "Quantum Information Processing, 21:373",
+            year:    "2022",
+            link:    "https://doi.org/10.1007/s11128-022-03714-3",
+          },
+          {
+            authors: "Kyungbae Jang, Gyeongju Song, Hyunjun Kim, Hyeokdong Kwon, Hyunji Kim, and Hwajeong Seo",
+            title:   "Efficient Implementation of PRESENT and GIFT on Quantum Computers",
+            venue:   "Applied Sciences, 11(11):4776",
+            year:    "2021",
+            link:    "https://doi.org/10.3390/app11114776",
+          },
+          {
+            authors: "Siyi Wang, Kyungbae Jang, Anubhab Baksi, Sumanta Chakraborty, Bryan Lee, Anupam Chattopadhyay, and Hwajeong Seo",
+            title:   "New Results in Quantum Analysis of LED: Featuring One and Two Oracle Attacks",
+            venue:   "INDOCRYPT 2025 — Springer LNCS, pp. 339–364 (Cryptology ePrint Archive, Paper 2024/1982)",
+            year:    "2025",
+            link:    "https://doi.org/10.1007/978-3-032-13301-4_15",
+          },
+          {
+            authors: "Kyungbae Jang, Anubhab Baksi, Jakub Breier, Hwajeong Seo, and Anupam Chattopadhyay",
+            title:   "Quantum Implementation and Analysis of DEFAULT",
+            venue:   "Cryptography and Communications",
+            year:    "2023",
+            link:    "https://doi.org/10.1007/s12095-023-00666-y",
+          },
+          {
+            authors: "Kyungbae Jang, Anubhab Baksi, Hyunji Kim, Hwajeong Seo, and Anupam Chattopadhyay",
+            title:   "Improved Quantum Analysis of SPECK and LowMC",
+            venue:   "INDOCRYPT 2022 — LNCS 13774, pp. 517–540 (Cryptology ePrint Archive, Paper 2022/1427)",
+            year:    "2022",
+            link:    "https://doi.org/10.1007/978-3-031-22912-1_23",
+          },
+          {
+            authors: "Kyungbae Jang, Yujin Oh, Hyunji Kim, and Hwajeong Seo",
+            title:   "Quantum Implementation of AIM: Aiming for Low-Depth",
+            venue:   "Applied Sciences, 14(7):2824",
+            year:    "2024",
+            link:    "https://doi.org/10.3390/app14072824",
+          },
+          {
+            authors: "Yujin Oh, Kyungbae Jang, Anubhab Baksi, and Hwajeong Seo",
+            title:   "Depth-Optimized Quantum Circuits for ASCON: AEAD and HASH",
+            venue:   "Mathematics, 12(9):1337",
+            year:    "2024",
+            link:    "https://doi.org/10.3390/math12091337",
+          },
+          {
+            authors: "Anik Basu Bhaumik, Suman Dutta, Kyungbae Jang, Anubhab Baksi, Siyi Wang, Amit Saha, Hwajeong Seo, and Anupam Chattopadhyay",
+            title:   "Can Quantum Break ZUC? Only with a Million Qubits and a Billion Years to Spare",
+            venue:   "INDOCRYPT 2025 — Springer LNCS (Cryptology ePrint Archive, Paper 2025/1832)",
+            year:    "2025",
+            link:    "https://eprint.iacr.org/2025/1832",
+          },
+        ]} />
+      </Section>
+
+      <Section heading="Hash Functions — Grover Preimage Circuits">
+        <ReferenceList entries={[
+          {
+            authors: "Kyungbae Jang, Hwajeong Seo, and Anupam Chattopadhyay",
+            title:   "Improved Quantum Cryptanalysis of MD5 and SHA-1",
+            venue:   "IEEE Access, Volume 14",
+            year:    "2025",
+            link:    "https://ieeexplore.ieee.org/document/11474848/",
+          },
+          {
+            authors: "Kyungbae Jang, Sejin Lim, Yujin Oh, Hyunjun Kim, Anubhab Baksi, Sumanta Chakraborty, and Hwajeong Seo",
+            title:   "Quantum Implementation and Analysis of SHA-2 and SHA-3",
+            venue:   "IEEE Transactions on Emerging Topics in Computing, 13(2):919–934",
+            year:    "2025",
+            link:    "https://doi.org/10.1109/TETC.2025.3546648",
+          },
+          {
+            authors: "Yujin Oh, Kyungbae Jang, and Hwajeong Seo",
+            title:   "Quantum Security Evaluation of ASCON",
+            venue:   "Cryptology ePrint Archive, Paper 2025/260",
+            year:    "2025",
+            link:    "https://eprint.iacr.org/2025/260",
+          },
+        ]} />
+      </Section>
+
+      <Section heading="Public-Key — Shor Circuits">
+        <ReferenceList entries={[
+          {
+            authors: "Hyunji Kim, Kyungbae Jang, Siyi Wang, Anubhab Baksi, Gyeongju Song, Hwajeong Seo, and Anupam Chattopadhyay",
+            title:   "New Quantum Circuits for ECDLP: Breaking Prime Elliptic Curve Cryptography in Minutes",
+            venue:   "Cryptology ePrint Archive, Paper 2026/106",
+            year:    "2026",
+            link:    "https://eprint.iacr.org/2026/106",
+          },
+          {
+            authors: "Kyungbae Jang, Vikas Srivastava, Anubhab Baksi, Santanu Sarkar, and Hwajeong Seo",
+            title:   "New Quantum Cryptanalysis of Binary Elliptic Curves",
+            venue:   "IACR Transactions on Cryptographic Hardware and Embedded Systems (TCHES), 2025(2):781–804",
+            year:    "2025",
+            link:    "https://doi.org/10.46586/tches.v2025.i2.781-804",
+          },
+        ]} />
+      </Section>
+
+      <Section heading="Code-Based PQC — Grover + ISD">
+        <ReferenceList entries={[
+          {
+            authors: "Kyung-Bae Jang and Hwa-Jeong Seo",
+            title:   "Analysis of Quantum Attack Cost for Code-Based Cryptographic Algorithms",
+            venue:   "Conference on Information Security and Cryptography Winter 2025 (CISC-W'25), 한국정보보호학회 동계학술대회",
+            year:    "2025",
+          },
+        ]} />
+      </Section>
+
+      <Section heading="Lattice-Based PQC — Grover + Lattice Sieve">
+        <ReferenceList entries={[
+          {
+            authors: "Hyunji Kim, Kyungbae Jang, Anubhab Baksi, Siyi Wang, Sumanta Chakraborty, Anupam Chattopadhyay, and Hwajeong Seo",
+            title:   "Concrete Quantum Sieve for Shortest Vector Problem with Application to Lattice-based Cryptography",
+            venue:   "Under submission",
+            year:    "2025",
+          },
+        ]} />
+      </Section>
+
+      <Section heading="Physical-Cost Models">
+        <ReferenceList entries={[
+          {
+            authors: "Sergey Bravyi and Alexei Kitaev",
+            title:   "Universal quantum computation with ideal Clifford gates and noisy ancillas",
+            venue:   "Physical Review A — Atomic, Molecular, and Optical Physics, 71(2):022316",
+            year:    "2005",
+            link:    "https://doi.org/10.1103/PhysRevA.71.022316",
+          },
+          {
+            authors: "Austin G. Fowler, Matteo Mariantoni, John M. Martinis, and Andrew N. Cleland",
+            title:   "Surface codes: Towards practical large-scale quantum computation",
+            venue:   "Physical Review A — Atomic, Molecular, and Optical Physics, 86(3):032324",
+            year:    "2012",
+            link:    "https://doi.org/10.1103/PhysRevA.86.032324",
+          },
+          {
+            authors: "Paul Webster, Lucas Berent, Omprakash Chandra, Evan T. Hockings, Nouédyn Baspin, Felix Thomsen, Samuel C. Smith, and Lawrence Z. Cohen",
+            title:   "The pinnacle architecture: Reducing the cost of breaking RSA-2048 to 100,000 physical qubits using quantum LDPC codes",
+            venue:   "arXiv preprint arXiv:2602.11457",
+            year:    "2026",
+            link:    "https://arxiv.org/abs/2602.11457",
+          },
+          {
+            authors: "Paul Webster, Samuel C. Smith, and Lawrence Z. Cohen",
+            title:   "Explicit construction of low-overhead gadgets for gates on quantum LDPC codes",
+            venue:   "arXiv preprint arXiv:2511.15989",
+            year:    "2025",
+            link:    "https://arxiv.org/abs/2511.15989",
+          },
+        ]} />
+      </Section>
+    </PageShell>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MAIN APP
+// ─────────────────────────────────────────────────────────────────
+function App() {
+  const initial = useMemo(() => resolveCipherData(), []);
+  const [ciphers, setCiphers] = useState(initial.data.ciphers);
+  const [selectedCipherId, setSelectedCipherId] = useState(initial.data.ciphers[0]?.id || null);
+  const [expandedCiphers, setExpandedCiphers] = useState(new Set([initial.data.ciphers[0]?.id]));
+  const [view, setView] = useState(IS_EDIT ? 'input' : 'viz');
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const toggleGroup = (name) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+  // Navigating to a child item should ensure its parent group is expanded
+  const navigateTo = (newView) => {
+    setView(newView);
+    if (['grover', 'shor'].includes(newView)) {
+      setExpandedGroups(prev => new Set(prev).add('Quantum Algorithm'));
+    } else if (['physical-surface', 'physical-qldpc'].includes(newView)) {
+      setExpandedGroups(prev => new Set(prev).add('Physical Estimation'));
+    }
+  };
+  // Click on the top banner → reset to a clean Resource Estimator screen
+  // (no cipher picked, no menu group expanded). Display preferences are left
+  // alone so the user doesn't lose their chart layout choices.
+  const goHome = () => {
+    setView('viz');
+    setSelectedCipherId(null);
+    setCustomCiphers(new Set());
+    setExpandedCiphers(new Set());
+    setExpandedGroups(new Set());
+    setCipherFilter('selected');
+  };
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  const [dataSource] = useState(initial.source);
+  const [vizMetric, setVizMetric] = useState('qubits');
+  const [vizScope, setVizScope] = useState('logical');
+  const [physicalCode, setPhysicalCode] = useState('surface');   // 'qldpc' | 'surface'
+  const [cycleTimeId, setCycleTimeId] = useState('1us');
+  const [hwPresetId, setHwPresetId] = useState('p1e-3');
+  const currentTc = (CYCLE_TIMES.find(c => c.id === cycleTimeId) || CYCLE_TIMES[0]).tc;
+  const currentHw = HARDWARE_PRESETS.find(h => h.id === hwPresetId) || HARDWARE_PRESETS[0];
+  const [logScale, setLogScale] = useState(true);
+  const [chartShape, setChartShape] = useState('bar');
+  const [cipherFilter, setCipherFilter] = useState('selected'); // 'selected' (chip-picked) | 'all'
+  const [customCiphers, setCustomCiphers] = useState(new Set());
+  const [scatterXMetric, setScatterXMetric] = useState('qubits');
+  const [scatterYMetric, setScatterYMetric] = useState('tDepth');
+  const [showAddCipher, setShowAddCipher] = useState(false);
+  const [newCipherName, setNewCipherName] = useState('');
+
+  const selectedCipher = ciphers.find(c => c.id === selectedCipherId);
+
+  const updateVariant = (cipherId, variantId, newVar) => {
+    setCiphers(cs => cs.map(c => c.id === cipherId
+      ? { ...c, variants: c.variants.map(v => v.id === variantId ? newVar : v) }
+      : c));
+  };
+  const deleteVariant = (cipherId, variantId) => {
+    setCiphers(cs => cs.map(c => c.id === cipherId
+      ? { ...c, variants: c.variants.filter(v => v.id !== variantId) }
+      : c));
+  };
+  const addVariant = (cipherId) => {
+    const c = ciphers.find(c => c.id === cipherId);
+    const n = c.variants.length + 1;
+    // ECC ciphers are all Shor-targeted. Only Prime ECC (Qubit opt / Depth opt)
+    // carries a separate qldpcInputs override block for QLDPC physical-cost
+    // calculation; Binary ECC reuses its `logical` values directly.
+    const isEcc = ['ecc-qubit-opt', 'ecc-depth-opt', 'binary-ecc'].includes(cipherId);
+    const hasQldpcOverride = ['ecc-qubit-opt', 'ecc-depth-opt'].includes(cipherId);
+    const newVariant = {
+      id: `v_${Math.random().toString(36).slice(2, 9)}`,
+      name: `${c.name}-variant-${n}`,
+      attack: isEcc ? 'Shor' : '',
+      logical:  { qubits: "", clifford: "", tGates: "", tDepth: "", measurementGates: "" },
+      physical: { physicalQubits: "", runtime: "" }, notes: ""
+    };
+    if (hasQldpcOverride) {
+      newVariant.qldpcInputs = { qubits: "", tGates: "", measurementGates: "" };
+    }
+    setCiphers(cs => cs.map(c => c.id === cipherId
+      ? { ...c, variants: [...c.variants, newVariant] } : c));
+  };
+  const addCipher = () => {
+    const name = newCipherName.trim();
+    if (!name) return;
+    setCiphers(cs => [...cs, {
+      id: `c_${Math.random().toString(36).slice(2, 9)}`,
+      name, color: '#94a3b8',
+      variants: [{
+        id: `v_${Math.random().toString(36).slice(2, 9)}`,
+        name: `${name}-1`, attack: "",
+        logical:  { qubits: "", clifford: "", tGates: "", tDepth: "", measurementGates: "" },
+        physical: { physicalQubits: "", runtime: "" }, notes: ""
+      }]
+    }]);
+    setNewCipherName('');
+    setShowAddCipher(false);
+  };
+  const deleteCipher = (id) => {
+    if (!confirm('Delete this cipher and all its variants?')) return;
+    setCiphers(cs => {
+      const next = cs.filter(c => c.id !== id);
+      if (id === selectedCipherId && next.length) setSelectedCipherId(next[0].id);
+      return next;
+    });
+  };
+
+  // ── Export functions ────────────────────────────────────────
+  const downloadFile = (filename, content, mime = 'text/plain') => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const exportJSON = () => {
+    const json = JSON.stringify({ ciphers }, null, 2);
+    const payload = `// Cipher data — generated ${new Date().toISOString().slice(0,10)}\nwindow.CIPHER_DATA = ${json};\n`;
+    downloadFile('data.js', payload, 'text/javascript');
+  };
+
+  // ── Chart data ──────────────────────────────────────────────
+  const chartData = useMemo(() => {
+    const rows = [];
+    const sourceCiphers = (
+      cipherFilter === 'all' ? ciphers
+      : ciphers.filter(c => customCiphers.has(c.id))
+    );
+    sourceCiphers.forEach(c => c.variants.forEach(v => {
+      const src = vizScope === 'logical' ? v.logical : computePhysical(v, currentTc, currentHw, physicalCode);
+      const fields = (vizScope === 'logical' ? LOGICAL_FIELDS : PHYSICAL_FIELDS).filter(f => !f.editOnly);
+      const row = { name: v.name, cipher: c.name, color: c.color };
+      fields.forEach(f => {
+        const p = parseValue(src?.[f.key]);
+        if (p !== null && p > 0) {
+          // Plot raw values; Recharts <YAxis scale="log"> handles the log mapping
+          // and emits human-readable ticks (10M, 100M, 1B, …) automatically.
+          row[f.key] = p;
+          row[`_raw_${f.key}`] = p;
+        }
+      });
+      if (fields.some(f => row[f.key] !== undefined)) rows.push(row);
+    }));
+    return rows;
+  }, [ciphers, vizScope, logScale, cipherFilter, selectedCipher, customCiphers, currentTc, currentHw, physicalCode]);
+
+
+  const currentFields = (vizScope === 'logical' ? LOGICAL_FIELDS : PHYSICAL_FIELDS).filter(f => !f.editOnly);
+  const currentMetric = currentFields.find(f => f.key === vizMetric) || currentFields[0];
+
+  const scatterXField = currentFields.find(f => f.key === scatterXMetric) || currentFields[0];
+  const scatterYField = currentFields.find(f => f.key === scatterYMetric) || currentFields[Math.min(1, currentFields.length - 1)];
+
+  const scatterData = useMemo(() => {
+    const rows = [];
+    const sourceCiphers = (
+      cipherFilter === 'all' ? ciphers
+      : ciphers.filter(c => customCiphers.has(c.id))
+    );
+    if (!scatterXField || !scatterYField) return rows;
+    sourceCiphers.forEach(c => c.variants.forEach(v => {
+      const src = vizScope === 'logical' ? v.logical : computePhysical(v, currentTc, currentHw, physicalCode);
+      const xRaw = parseValue(src?.[scatterXField.key]);
+      const yRaw = parseValue(src?.[scatterYField.key]);
+      if (xRaw > 0 && yRaw > 0) {
+        // Plot raw values; Recharts axes use scale="log" for the log mapping.
+        rows.push({
+          name: v.name, cipher: c.name, color: c.color,
+          x: xRaw,
+          y: yRaw,
+          _rawX: xRaw, _rawY: yRaw
+        });
+      }
+    }));
+    return rows;
+  }, [ciphers, cipherFilter, selectedCipher, customCiphers, vizScope, scatterXField, scatterYField, currentTc, currentHw, physicalCode]);
+
+  useEffect(() => {
+    if (!currentFields.find(f => f.key === vizMetric)) setVizMetric(currentFields[0].key);
+    // Reset scatter axes to sensible defaults for the new scope
+    if (vizScope === 'logical') {
+      setScatterXMetric('qubits');
+      setScatterYMetric('tDepth');
+    } else {
+      setScatterXMetric('physicalQubits');
+      setScatterYMetric('runtime');
+    }
+  }, [vizScope]); // eslint-disable-line
+
+  // Keep the Detailed-estimates panel in sync with what's actually rendered on
+  // the chart. If `selectedCipher` is not present among the chart rows (e.g. user
+  // picked Shor-only ciphers but selectedCipher is still AES), switch to the
+  // first cipher that IS plotted. This makes the legend buttons feel responsive
+  // and prevents stale detail panels.
+  useEffect(() => {
+    if (IS_EDIT) return;
+    const rows = chartShape === 'scatter' ? scatterData : chartData;
+    if (rows.length === 0) return;
+    // Set of cipher names currently rendered on the chart
+    const chartCipherNames = new Set(rows.map(r => r.cipher));
+    const sel = ciphers.find(c => c.id === selectedCipherId);
+    if (sel && chartCipherNames.has(sel.name)) return;   // still valid
+    // Fallback: pick the first cipher that has any chart data
+    const fallback = ciphers.find(c => chartCipherNames.has(c.name));
+    if (fallback) setSelectedCipherId(fallback.id);
+  }, [chartData, scatterData, chartShape, selectedCipherId, ciphers]);
+
+  const hasChartData = chartShape === 'scatter' ? scatterData.length > 0 : chartData.length > 0;
+
+  return (
+    <div className="font-sans min-h-screen relative overflow-x-hidden">
+      <div className="fixed inset-0 grid-bg opacity-60 pointer-events-none" />
+      <div className="fixed top-0 left-1/4 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none pulse-slow" />
+      <div className="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-500/5 rounded-full blur-[120px] pointer-events-none pulse-slow" style={{ animationDelay: '1.5s' }} />
+
+      <div className="relative">
+        {/* HEADER */}
+        <header className="border-b border-white/8 backdrop-blur-sm">
+          <div className="max-w-[1600px] mx-auto px-8 py-6 flex items-center justify-between flex-wrap gap-4">
+            <div onClick={goHome}
+                 role="button" tabIndex={0}
+                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goHome(); } }}
+                 title="Reset to home"
+                 className="flex items-center gap-5 cursor-pointer select-none group">
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full border border-cyan-400/40 flex items-center justify-center text-cyan-300 transition-colors group-hover:border-cyan-300/70">
+                  <Icon name="atom" size={18} />
+                </div>
+                <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping" />
+              </div>
+              <div>
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <h1 className="font-mono text-3xl text-white">{SITE_CONFIG.title}</h1>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-300/70">/resource-estimator</span>
+                </div>
+                <p className="font-mono text-xs text-white/40 tracking-wide mt-0.5">{SITE_CONFIG.subtitle}</p>
+              </div>
+            </div>
+
+            <nav className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center rounded-md border border-white/15 overflow-hidden">
+                <button onClick={() => setTheme('light')}
+                  title="Light mode"
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-mono transition-colors ${
+                    theme === 'light'
+                      ? 'bg-cyan-400/10 text-cyan-300'
+                      : 'text-white/45 hover:text-white/80'
+                  }`}>
+                  <Icon name="sun" size={13} /><span>Light</span>
+                </button>
+                <button onClick={() => setTheme('dark')}
+                  title="Dark mode"
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-mono transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-cyan-400/10 text-cyan-300'
+                      : 'text-white/45 hover:text-white/80'
+                  }`}>
+                  <Icon name="moon" size={13} /><span>Dark</span>
+                </button>
+              </div>
+              <div className="mx-1 h-6 w-px bg-white/10" />
+              {IS_EDIT && (
+                <>
+                  <Tab active={view === 'input'} onClick={() => setView('input')} icon="db">Data Entry</Tab>
+                  <Tab active={view === 'viz'} onClick={() => setView('viz')} icon="chart">Visualization</Tab>
+                  <div className="mx-2 h-6 w-px bg-white/10" />
+                  <button onClick={exportJSON}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-mono text-cyan-300 bg-cyan-400/10 border border-cyan-400/30 hover:bg-cyan-400/20">
+                    <Icon name="download" size={12} />Export data.js
+                  </button>
+                  <span className="ml-2 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300 bg-amber-400/10 rounded border border-amber-400/30">
+                    Edit Mode
+                  </span>
+                </>
+              )}
+            </nav>
+          </div>
+        </header>
+
+        {/* BODY */}
+        <div className="max-w-[1600px] mx-auto px-8 py-8 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+          {/* SIDEBAR */}
+          <aside className="space-y-1">
+            {IS_EDIT ? (
+              <>
+                {/* ── Edit mode: keep the original cipher catalogue ─────── */}
+                <div className="flex items-center justify-between px-2 mb-4">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">Cipher Catalogue</span>
+                  <span className="font-mono text-[10px] text-white/30">
+                    {ciphers.reduce((a, c) => a + c.variants.length, 0)} variants
+                  </span>
+                </div>
+                <div className="space-y-1 scrollbar-thin">
+                  {(() => {
+                    const CATEGORIES = [
+                      { key: 'Grover + Exhaustive key search', label: 'Symmetric ciphers' },
+                      { key: 'Grover + Preimage search',       label: 'Hash functions' },
+                      { key: 'Shor',                           label: 'Public-key (ECC)' },
+                      { key: 'Grover + ISD',                   label: 'Code-based PQC' },
+                      { key: 'Grover + NV sieve (SVP problem)', label: 'Lattice-based PQC' },
+                    ];
+                    const groups = new Map();
+                    ciphers.forEach(c => {
+                      const a = c.variants[0]?.attack || '—';
+                      if (!groups.has(a)) groups.set(a, []);
+                      groups.get(a).push(c);
+                    });
+                    const orderedCats = [
+                      ...CATEGORIES.filter(cat => groups.has(cat.key)),
+                      ...[...groups.keys()].filter(k => !CATEGORIES.find(c => c.key === k))
+                        .map(k => ({ key: k, label: k })),
+                    ];
+                    return orderedCats.map((cat, catIdx) => (
+                      <div key={cat.key} className={catIdx > 0 ? 'pt-3' : ''}>
+                        <div className="px-3 pb-1.5 font-mono text-[9px] uppercase tracking-[0.25em] text-white/30">
+                          {cat.label}
+                        </div>
+                        {groups.get(cat.key).map(c => {
+                          const isExpanded = expandedCiphers.has(c.id);
+                          const isSelected = c.id === selectedCipherId;
+                          return (
+                            <div key={c.id}>
+                              <div className={`group flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-all ${
+                                isSelected ? 'bg-white/[0.04]' : 'hover:bg-white/[0.02]'}`}
+                                onClick={() => {
+                                  setSelectedCipherId(c.id);
+                                  setExpandedCiphers(s => {
+                                    const n = new Set(s);
+                                    if (n.has(c.id)) n.delete(c.id); else n.add(c.id);
+                                    return n;
+                                  });
+                                }}>
+                                <Icon name={isExpanded ? 'chevronD' : 'chevronR'} size={12} className="text-white/40" />
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ background: c.color }} />
+                                <span className={`font-mono text-sm flex-1 ${isSelected ? 'text-white' : 'text-white/70'}`}>{c.name}</span>
+                                <span className="font-mono text-[10px] text-white/30">{c.variants.length}</span>
+                                <button onClick={(e) => { e.stopPropagation(); deleteCipher(c.id); }}
+                                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-white/30 hover:text-red-400 transition-opacity">
+                                  <Icon name="x" size={12} />
+                                </button>
+                              </div>
+                              {isExpanded && (
+                                <div className="ml-6 pl-3 border-l border-white/8 mt-1 mb-2 space-y-0.5">
+                                  {c.variants.map(v => (
+                                    <div key={v.id}
+                                      className="px-2 py-1 rounded text-xs font-mono text-white/50 hover:text-white/80 hover:bg-white/[0.02]">
+                                      {v.name}
+                                    </div>
+                                  ))}
+                                  <button onClick={() => addVariant(c.id)}
+                                    className="flex items-center gap-1 px-2 py-1 text-xs font-mono text-white/30 hover:text-cyan-300 transition-colors">
+                                    <Icon name="plus" size={10} /> variant
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <div className="pt-4 mt-4 border-t border-white/8">
+                  {showAddCipher ? (
+                    <div className="flex items-center gap-1 px-2">
+                      <input type="text" value={newCipherName} onChange={(e) => setNewCipherName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') addCipher(); if (e.key === 'Escape') setShowAddCipher(false); }}
+                        placeholder="cipher name" autoFocus className="bare-input font-mono text-sm py-1" />
+                      <button onClick={addCipher} className="p-1 text-cyan-400 hover:bg-white/5 rounded"><Icon name="check" size={12} /></button>
+                      <button onClick={() => setShowAddCipher(false)} className="p-1 text-white/40 hover:bg-white/5 rounded"><Icon name="x" size={12} /></button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setShowAddCipher(true)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-mono text-white/40 hover:text-cyan-300 hover:bg-white/[0.02]">
+                      <Icon name="plus" size={12} /> add cipher
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* ── Read-only mode: page navigation ───────────────────── */}
+                <div className="flex items-center gap-2 px-2 mb-4 text-white/40">
+                  <Icon name="menu" size={16} />
+                  <span className="font-mono text-[12.5px] uppercase tracking-[0.25em]">Menu</span>
+                </div>
+                <nav className="space-y-1">
+                  {[
+                    { id: 'viz',      label: 'Resource Estimator', icon: 'chart', desc: 'Logical & physical cost' },
+                    { id: 'overview', label: 'Overview',           icon: 'info',  desc: 'Background & methods' },
+                    {
+                      group: 'Quantum Algorithm',
+                      icon: 'atom',
+                      children: [
+                        { id: 'grover', label: "Grover's Algorithm", desc: 'Search-based attacks' },
+                        { id: 'shor',   label: "Shor's Algorithm",   desc: 'Periodicity-based attacks' },
+                      ],
+                    },
+                    {
+                      group: 'Physical Estimation',
+                      icon: 'cpu',
+                      children: [
+                        { id: 'physical-surface', label: 'Surface codes', desc: 'T-distillation pipeline' },
+                        { id: 'physical-qldpc',   label: 'QLDPC codes',   desc: 'Block-encoded pipeline' },
+                      ],
+                    },
+                    { id: 'refs', label: 'References', icon: 'db', desc: 'Source publications' },
+                  ].map((item, idx) => {
+                    // Grouped (nested) item — clickable header with chevron + collapsible children
+                    if (item.children) {
+                      const expanded = expandedGroups.has(item.group);
+                      const childActive = item.children.some(c => c.id === view);
+                      return (
+                        <div key={'g-' + idx} className="pt-1 pb-0.5">
+                          <button
+                            onClick={() => toggleGroup(item.group)}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-all ${
+                              childActive ? 'text-cyan-300' : 'text-white/85 hover:bg-white/[0.025]'}`}
+                            aria-expanded={expanded}
+                          >
+                            <div className={childActive ? 'text-cyan-300' : 'text-white/45'}>
+                              <Icon name={item.icon} size={14} />
+                            </div>
+                            <div className="flex-1 font-mono text-sm">{item.group}</div>
+                            <div className="text-white/35">
+                              <Icon name={expanded ? 'chevronD' : 'chevronR'} size={12} />
+                            </div>
+                          </button>
+                          {expanded && (
+                            <div className="ml-3 pl-3 border-l border-white/10 space-y-1 mt-1">
+                              {item.children.map(child => {
+                                const active = view === child.id;
+                                return (
+                                  <button key={child.id} onClick={() => navigateTo(child.id)}
+                                    className={`w-full block px-3 py-2 rounded-md text-left transition-all ${
+                                      active ? 'bg-cyan-400/10 border border-cyan-400/25' : 'border border-transparent hover:bg-white/[0.025]'}`}>
+                                    <div className={`font-mono text-sm ${active ? 'text-cyan-300' : 'text-white/65'}`}>{child.label}</div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    // Regular flat item
+                    const active = view === item.id;
+                    return (
+                      <button key={item.id} onClick={() => setView(item.id)}
+                        className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-md text-left transition-all ${
+                          active ? 'bg-cyan-400/10 border border-cyan-400/25' : 'border border-transparent hover:bg-white/[0.025]'}`}>
+                        <div className={active ? 'text-cyan-300 mt-0.5' : 'text-white/40 mt-0.5'}>
+                          <Icon name={item.icon} size={14} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-mono text-sm ${active ? 'text-cyan-300' : 'text-white/85'}`}>{item.label}</div>
+                          <div className="font-mono text-[10px] text-white/35 mt-0.5">{item.desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </>
+            )}
+
+            {/* Author / metadata — shown in BOTH modes */}
+            <div className="pt-6 mt-6 border-t border-white/8 px-2 space-y-1">
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">Created by</div>
+              <div className="font-mono text-xs text-white/70 leading-relaxed">
+                {(() => {
+                  const authors = SITE_CONFIG.authors || '';
+                  // PIs / senior authors get the highlight colour.
+                  const highlighted = new Set(['Hwajeong Seo', 'Anupam Chattopadhyay']);
+                  return authors.split(',').map((raw, i) => {
+                    const name = raw.trim();
+                    if (!name) return null;
+                    const isHL = highlighted.has(name);
+                    return (
+                      <div key={i} style={isHL ? { color: 'var(--pi-color)' } : undefined}>
+                        {name}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* NTU institutional badge */}
+              <div className="pt-3 flex items-center gap-2 flex-nowrap">
+                <img
+                  src="assets/ntu_logo.png"
+                  alt="Nanyang Technological University, Singapore"
+                  className="h-auto shrink-0"
+                  style={{ width: '130px' }}
+                />
+                <img
+                  src="assets/cryptocraft_lab.png"
+                  alt="CryptoCraft Lab"
+                  className="h-auto shrink-0 logo-adaptive"
+                  style={{ width: '130px' }}
+                />
+              </div>
+              <div className="pt-2 px-0.5 space-y-1.5">
+                {(SITE_CONFIG.affiliations || []).map((a, i) => (
+                  <div key={i}>
+                    <div className="font-mono text-[10px] text-white/55 leading-tight">{a.institution}</div>
+                    <div className="font-mono text-[10px] text-white/40 leading-tight">{a.group}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="font-mono text-[10px] text-white/30 pt-3">Last updated · {SITE_CONFIG.lastUpdated}</div>
+            </div>
+          </aside>
+
+          {/* MAIN */}
+          <main className="min-w-0">
+            {view === 'input' && IS_EDIT && selectedCipher ? (
+              <div className="space-y-6">
+                <div className="flex items-end justify-between flex-wrap gap-4">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="w-2 h-2 rounded-full" style={{ background: selectedCipher.color }} />
+                      <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">Cipher Family</span>
+                    </div>
+                    <h2 className="font-mono text-5xl text-white">{selectedCipher.name}</h2>
+                  </div>
+                  <button onClick={() => addVariant(selectedCipher.id)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-md border border-white/15 text-sm font-mono text-white/70 hover:text-white hover:border-cyan-400/50">
+                    <Icon name="plus" size={12} /> variant
+                  </button>
+                </div>
+                <div className="h-px bg-gradient-to-r from-white/15 via-white/8 to-transparent" />
+                <div className="space-y-4">
+                  {selectedCipher.variants.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-white/15 p-12 text-center">
+                      <p className="font-mono text-sm text-white/40">No variants yet.</p>
+                    </div>
+                  ) : selectedCipher.variants.map(v => (
+                    <VariantBlock key={v.id} variant={v} accent={selectedCipher.color}
+                      onChange={(nv) => updateVariant(selectedCipher.id, v.id, nv)}
+                      onDelete={() => deleteVariant(selectedCipher.id, v.id)}
+                      readOnly={false} />
+                  ))}
+                </div>
+              </div>
+            ) : view === 'viz' ? (
+              <div className="space-y-6">
+                <div className="flex flex-wrap gap-x-5 gap-y-3">
+                  <ControlGroup label="Scope">
+                    <SegBtn active={vizScope === 'logical'} onClick={() => setVizScope('logical')}>Logical</SegBtn>
+                    <SegBtn active={vizScope === 'physical'} onClick={() => setVizScope('physical')}>Physical</SegBtn>
+                  </ControlGroup>
+                  {vizScope === 'physical' && (
+                    <>
+                      <ControlGroup label="Code">
+                        <SegBtn active={physicalCode === 'surface'} onClick={() => setPhysicalCode('surface')}>Surface</SegBtn>
+                        <SegBtn active={physicalCode === 'qldpc'} onClick={() => setPhysicalCode('qldpc')}>QLDPC</SegBtn>
+                      </ControlGroup>
+                      <ControlGroup label="Error rate">
+                        {HARDWARE_PRESETS.map(hw => (
+                          <SegBtn key={hw.id} active={hwPresetId === hw.id} onClick={() => setHwPresetId(hw.id)}>
+                            {hw.label}
+                          </SegBtn>
+                        ))}
+                      </ControlGroup>
+                      <ControlGroup label="Cycle time">
+                        {CYCLE_TIMES.map(ct => (
+                          <SegBtn key={ct.id} active={cycleTimeId === ct.id} onClick={() => setCycleTimeId(ct.id)}>
+                            {ct.label}
+                          </SegBtn>
+                        ))}
+                      </ControlGroup>
+                    </>
+                  )}
+                  <ControlGroup label="Show">
+                    <SegBtn active={cipherFilter === 'selected'} onClick={() => setCipherFilter('selected')}>
+                      Selected
+                    </SegBtn>
+                    <SegBtn active={cipherFilter === 'all'} onClick={() => setCipherFilter('all')}>All</SegBtn>
+                  </ControlGroup>
+                  <ControlGroup label="Chart">
+                    <SegBtn active={chartShape === 'bar'} onClick={() => setChartShape('bar')}>Bar</SegBtn>
+                    <SegBtn active={chartShape === 'scatter'} onClick={() => setChartShape('scatter')}>Scatter</SegBtn>
+                  </ControlGroup>
+                  {chartShape === 'bar' && (
+                    <ControlGroup label="Metric">
+                      <select value={vizMetric} onChange={(e) => setVizMetric(e.target.value)}
+                        className="w-full bg-transparent border border-white/15 rounded-md px-3 py-1.5 text-sm font-mono text-white/50 hover:text-white/80 focus:outline-none focus:border-cyan-400/50">
+                        {currentFields.map(f => (
+                          <option key={f.key} value={f.key} className="bg-[#0a0e1a]">{f.label}</option>
+                        ))}
+                      </select>
+                    </ControlGroup>
+                  )}
+                  {chartShape === 'scatter' && (
+                    <>
+                      <ControlGroup label="X axis">
+                        <select value={scatterXMetric}
+                          onChange={(e) => {
+                            const nx = e.target.value;
+                            // If new X equals current Y, push Y to a different field
+                            if (nx === scatterYMetric) {
+                              const other = currentFields.find(f => f.key !== nx);
+                              if (other) setScatterYMetric(other.key);
+                            }
+                            setScatterXMetric(nx);
+                          }}
+                          className="w-full bg-transparent border border-white/15 rounded-md px-3 py-1.5 text-sm font-mono text-white/50 hover:text-white/80 focus:outline-none focus:border-cyan-400/50">
+                          {currentFields.filter(f => f.key !== scatterYMetric).map(f => (
+                            <option key={f.key} value={f.key} className="bg-[#0a0e1a]">{f.label}</option>
+                          ))}
+                        </select>
+                      </ControlGroup>
+                      <ControlGroup label="Y axis">
+                        <select value={scatterYMetric}
+                          onChange={(e) => {
+                            const ny = e.target.value;
+                            if (ny === scatterXMetric) {
+                              const other = currentFields.find(f => f.key !== ny);
+                              if (other) setScatterXMetric(other.key);
+                            }
+                            setScatterYMetric(ny);
+                          }}
+                          className="w-full bg-transparent border border-white/15 rounded-md px-3 py-1.5 text-sm font-mono text-white/50 hover:text-white/80 focus:outline-none focus:border-cyan-400/50">
+                          {currentFields.filter(f => f.key !== scatterXMetric).map(f => (
+                            <option key={f.key} value={f.key} className="bg-[#0a0e1a]">{f.label}</option>
+                          ))}
+                        </select>
+                      </ControlGroup>
+                      <div className="flex flex-col justify-end">
+                        <button
+                          onClick={() => {
+                            const tmp = scatterXMetric;
+                            setScatterXMetric(scatterYMetric);
+                            setScatterYMetric(tmp);
+                          }}
+                          title="Swap X and Y axes"
+                          className="px-2.5 py-2 rounded-md border border-white/15 text-white/55 hover:text-cyan-300 hover:border-cyan-400/40 transition-all">
+                          <Icon name="swap" size={14} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                </div>
+
+                {/* QLDPC scope notice: only when ALL selected ciphers are non-Shor.
+                    If the user mixed Shor + non-Shor (e.g. AES + ECC), some bars
+                    will simply be missing — no notice needed. */}
+                {vizScope === 'physical' && physicalCode === 'qldpc' && (() => {
+                  const visibleCiphers = cipherFilter === 'all'
+                    ? ciphers
+                    : ciphers.filter(c => customCiphers.has(c.id));
+                  if (visibleCiphers.length === 0) return null;
+                  const anyShor = visibleCiphers.some(c =>
+                    c.variants.some(v => v.attack === 'Shor'));
+                  if (anyShor) return null;
+                  return (
+                    <div className="rounded-lg border border-amber-300/30 bg-amber-300/[0.04] px-4 py-3">
+                      <div className="flex items-start gap-3">
+                        <Icon name="info" size={16} className="text-amber-300/70 mt-0.5 shrink-0" />
+                        <div className="font-mono text-xs text-white/70 leading-relaxed">
+                          <span className="text-amber-300/90">QLDPC physical-cost estimation is calibrated only for Shor-targeted variants </span>
+                          <span className="text-white/50">(Prime ECC, Binary ECC).</span>
+                          {' '}The selected ciphers use Grover-based attacks, for which the Surface-code model below is appropriate. Switch the <span className="text-white">Code</span> toggle to <span className="text-white">Surface</span> for valid estimates.
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {cipherFilter === 'selected' && (() => {
+                  // Group ciphers by attack type (taken from the first variant's `attack`).
+                  // Display order intentional: symmetric → hash → public-key → code-based → lattice.
+                  const GROUP_ORDER = [
+                    'Grover + Exhaustive key search',
+                    'Grover + Preimage search',
+                    'Shor',
+                    'Grover + ISD',
+                    'Grover + NV sieve (SVP problem)',
+                  ];
+                  const SHORT = {
+                    'Grover + Exhaustive key search': 'Symmetric — Grover + Key search',
+                    'Grover + Preimage search':       'Hash — Grover + Preimage search',
+                    'Shor':                           'Public-key — Shor',
+                    'Grover + ISD':                   'Code-based PQC — Grover + ISD',
+                    'Grover + NV sieve (SVP problem)':'Lattice PQC — Grover + NV sieve (SVP)',
+                  };
+                  const groups = new Map();
+                  ciphers.forEach(c => {
+                    const a = c.variants[0]?.attack || '—';
+                    if (!groups.has(a)) groups.set(a, []);
+                    groups.get(a).push(c);
+                  });
+                  // Order groups according to GROUP_ORDER; trailing unknown groups last
+                  const orderedKeys = [
+                    ...GROUP_ORDER.filter(k => groups.has(k)),
+                    ...[...groups.keys()].filter(k => !GROUP_ORDER.includes(k)),
+                  ];
+                  return (
+                    <div className="rounded-lg border border-white/8 bg-white/[0.015] px-4 py-3">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
+                          Pick ciphers to compare
+                        </span>
+                        <span className="font-mono text-[10px] text-white/30">
+                          ({customCiphers.size}/{ciphers.length})
+                        </span>
+                        <div className="flex-1" />
+                        <button onClick={() => setCustomCiphers(new Set(ciphers.map(c => c.id)))}
+                          className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/40 hover:text-cyan-300 transition-colors">
+                          all
+                        </button>
+                        <span className="text-white/20">·</span>
+                        <button onClick={() => setCustomCiphers(new Set())}
+                          className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/40 hover:text-red-300 transition-colors">
+                          none
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        {orderedKeys.map(attackKey => {
+                          const list = groups.get(attackKey);
+                          const groupIds = list.map(c => c.id);
+                          const allOn = groupIds.every(id => customCiphers.has(id));
+                          const anyOn = groupIds.some(id => customCiphers.has(id));
+                          return (
+                            <div key={attackKey}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/80">
+                                  {SHORT[attackKey] || attackKey}
+                                </span>
+                                <button onClick={() => setCustomCiphers(s => {
+                                  const n = new Set(s);
+                                  if (allOn) groupIds.forEach(id => n.delete(id));
+                                  else groupIds.forEach(id => n.add(id));
+                                  return n;
+                                })}
+                                  className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/40 hover:text-cyan-300/80 transition-colors">
+                                  {allOn ? '−' : '+'}{anyOn && !allOn ? ` (${groupIds.filter(id => customCiphers.has(id)).length}/${groupIds.length})` : ''}
+                                </button>
+                                <div className="flex-1 h-px bg-white/5" />
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {list.map(c => {
+                                  const on = customCiphers.has(c.id);
+                                  return (
+                                    <button
+                                      key={c.id}
+                                      onClick={() => setCustomCiphers(s => {
+                                        const n = new Set(s);
+                                        if (n.has(c.id)) n.delete(c.id); else n.add(c.id);
+                                        return n;
+                                      })}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[13px] font-mono border transition-all"
+                                      style={{
+                                        borderColor: on ? c.color : 'var(--chip-off-border)',
+                                        background: on ? `${c.color}18` : 'transparent',
+                                        color: on ? c.color : 'var(--chip-off-text)',
+                                      }}>
+                                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: c.color }} />
+                                      {c.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div className="rounded-lg border border-white/8 bg-white/[0.015] p-6">
+                  {!hasChartData ? (
+                    <div className="h-[500px] flex flex-col items-center justify-center text-center">
+                      <Icon name="sparkles" size={32} className="text-white/20 mb-4" />
+                      <p className="font-mono text-sm text-white/40 mb-1">No data available</p>
+                      <p className="font-mono text-xs text-white/25">
+                        {IS_EDIT ? 'Enter values in Data Entry to populate this chart.' : cipherFilter === 'selected' && customCiphers.size === 0 ? 'Pick one or more ciphers above to compare.' : vizScope === 'physical' && physicalCode === 'qldpc' ? 'QLDPC physical-cost estimation is applied only to Shor-targeted variants (Prime ECC, Binary ECC). Switch to Surface code to include Grover-targeted ciphers.' : vizScope === 'physical' ? 'Required logical resources (Logical Qubits, T Gates, Clifford Gates, T-depth) are missing for the selected variants.' : 'No resource estimates have been published for this view yet.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="font-mono text-xs text-white/50">
+                          {chartShape === 'scatter' ? `${scatterData.length} variants plotted` : `${chartData.length} variants · ${vizScope} resources`}
+                        </div>
+                      </div>
+                      <div style={{ width: '100%', height: 500 }}>
+                        <ResponsiveContainer>
+                          {chartShape === 'bar' ? (
+                            <BarChart data={chartData} margin={{ top: 20, right: 20, bottom: cipherFilter === 'all' ? 130 : 70, left: 55 }}>
+                              <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                              {cipherFilter === 'all' ? (
+                                <XAxis dataKey="name" stroke="rgba(255,255,255,0.15)" interval={0}
+                                  tickLine={false}
+                                  tick={(props) => <CipherGroupTick {...props} chartData={chartData} ciphers={ciphers} />} />
+                              ) : (
+                                <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                                  stroke="rgba(255,255,255,0.15)" angle={-45} textAnchor="end" height={70} interval={0} />
+                              )}
+                              <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                                stroke="rgba(255,255,255,0.15)"
+                                width={80}
+                                scale="log"
+                                domain={[
+                                  (dataMin) => dataMin > 0 ? dataMin / 4 : 0.001,
+                                  'auto'
+                                ]}
+                                allowDataOverflow={false}
+                                tickFormatter={(v) => currentMetric.key === 'runtime' ? formatRuntime(v) : formatAbbrev(v)}
+                                label={{
+                                  value: currentMetric.label,
+                                  angle: -90, position: 'left', offset: 10,
+                                  style: { fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: 'JetBrains Mono' } }} />
+                              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} content={<ChartTooltip logScale={false} />} />
+                              <Bar dataKey={vizMetric} name={currentMetric.label} radius={[4, 4, 0, 0]}>
+                                {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                              </Bar>
+                            </BarChart>
+                          ) : (
+                            <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 55 }}>
+                              <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" />
+                              <XAxis type="number" dataKey="x" name={scatterXField?.label}
+                                scale="log" domain={['auto', 'auto']} allowDataOverflow={false}
+                                tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                                stroke="rgba(255,255,255,0.15)"
+                                tickFormatter={(v) => scatterXField?.key === 'runtime' ? formatRuntime(v) : formatAbbrev(v)}
+                                label={{ value: scatterXField?.label,
+                                  position: 'insideBottom', offset: -10,
+                                  style: { fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: 'JetBrains Mono' } }} />
+                              <YAxis type="number" dataKey="y" name={scatterYField?.label}
+                                scale="log" domain={['auto', 'auto']} allowDataOverflow={false}
+                                width={80}
+                                tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                                stroke="rgba(255,255,255,0.15)"
+                                tickFormatter={(v) => scatterYField?.key === 'runtime' ? formatRuntime(v) : formatAbbrev(v)}
+                                label={{ value: scatterYField?.label,
+                                  angle: -90, position: 'left', offset: 10,
+                                  style: { fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: 'JetBrains Mono' } }} />
+                              <Tooltip cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeDasharray: '3 3' }}
+                                content={({ active, payload }) => {
+                                  if (!active || !payload?.length) return null;
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div className="rounded-lg border px-4 py-3 backdrop-blur-md shadow-2xl"
+                                         style={{
+                                           background:  'var(--tooltip-bg)',
+                                           borderColor: 'var(--tooltip-border)',
+                                           color:       'var(--tooltip-value)',
+                                         }}>
+                                      <div className="font-mono text-lg" style={{ color: d.color }}>{d.name}</div>
+                                      <div className="font-mono text-xs mb-2" style={{ color: 'var(--tooltip-label)' }}>{d.cipher}</div>
+                                      <div className="font-mono text-xs space-y-1" style={{ color: 'var(--tooltip-name)' }}>
+                                        <div>{scatterXField?.label}: <span style={{ color: 'var(--tooltip-value)' }}>{scatterXField?.key === 'runtime' ? formatRuntime(d._rawX) : formatValue(d._rawX)}</span></div>
+                                        <div>{scatterYField?.label}: <span style={{ color: 'var(--tooltip-value)' }}>{scatterYField?.key === 'runtime' ? formatRuntime(d._rawY) : formatValue(d._rawY)}</span></div>
+                                      </div>
+                                    </div>
+                                  );
+                                }} />
+                              <Scatter data={scatterData}>
+                                {scatterData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                              </Scatter>
+                            </ScatterChart>
+                          )}
+                        </ResponsiveContainer>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {hasChartData && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                    {ciphers.map(c => {
+                      const count = (chartShape === 'scatter' ? scatterData : chartData)
+                        .filter(d => d.cipher === c.name).length;
+                      if (count === 0) return null;
+                      const isSelected = selectedCipherId === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setSelectedCipherId(c.id)}
+                          title={`Show ${c.name} detailed estimates`}
+                          className="flex items-center gap-2 px-3 py-2 rounded-md border bg-white/[0.015] hover:bg-white/[0.04] transition-colors text-left"
+                          style={{
+                            borderColor: isSelected ? c.color : 'rgba(255,255,255,0.08)',
+                            background: isSelected ? `${c.color}10` : undefined,
+                          }}>
+                          <div className="w-2 h-2 rounded-full" style={{ background: c.color }} />
+                          <span className="font-mono text-xs text-white/80">{c.name}</span>
+                          <span className="font-mono text-[10px] text-white/40 ml-auto">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Read-only data table when in view mode and a cipher is selected.
+                    Position: AFTER the legend so users can pick from the legend → see details below. */}
+                {!IS_EDIT && selectedCipher && (
+                  <div className="space-y-4 pt-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full" style={{ background: selectedCipher.color }} />
+                      <h3 className="font-mono text-3xl text-white">{selectedCipher.name}</h3>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">Detailed estimates</span>
+                    </div>
+                    <div className="space-y-4">
+                      {selectedCipher.variants.map(v => (
+                        <VariantBlock key={v.id} variant={v} accent={selectedCipher.color}
+                          onChange={() => {}} onDelete={() => {}} readOnly={true} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : view === 'overview' ? (
+              <OverviewPage />
+            ) : view === 'grover' ? (
+              <GroverPage ciphers={ciphers} />
+            ) : view === 'shor' ? (
+              <ShorPage ciphers={ciphers} />
+            ) : view === 'physical-surface' ? (
+              <SurfaceCodesPage />
+            ) : view === 'physical-qldpc' ? (
+              <QldpcCodesPage />
+            ) : view === 'refs' ? (
+              <ReferencesPage />
+            ) : null}
+          </main>
+        </div>
+
+        <footer className="border-t border-white/8 mt-12">
+          <div className="max-w-[1600px] mx-auto px-8 py-4 flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-white/30">
+            <span>{SITE_CONFIG.affiliation} · {SITE_CONFIG.group} · {SITE_CONFIG.lastUpdated}</span>
+            <span>Source: {dataSource} · Values accept 2^N · N·2^M · scientific</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>
