@@ -11,15 +11,7 @@ numbers (physical qubits, runtime) under fault-tolerant error correction.
 
 ## Live site
 
-https://USERNAME.github.io/REPO-NAME/
-
-## Run locally
-
-Static page, no build step:
-
-```bash
-python3 -m http.server 8000   # then open http://localhost:8000
-```
+https://starj1023.github.io/Quantum-Cryptanalysis/
 
 ## Files
 
