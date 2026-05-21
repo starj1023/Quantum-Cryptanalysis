@@ -822,6 +822,7 @@ const Icon = ({ name, size = 14, className = '' }) => {
     wave: <path d="M2 12 q 2.5 -7 5 0 t 5 0 t 5 0 t 5 0"/>,
     atom: <><circle cx="12" cy="12" r="1.5"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></>,
     swap: <><line x1="3" y1="8" x2="21" y2="8"/><polyline points="16 3 21 8 16 13"/><line x1="3" y1="16" x2="21" y2="16"/><polyline points="8 11 3 16 8 21"/></>,
+    mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -867,7 +868,7 @@ const ResourceInput = ({ label, value, onChange, unit, readOnly, linear }) => (
 );
 
 // ── Variant block ───────────────────────────────────────────────
-const VariantBlock = ({ variant, onChange, onDelete, accent, readOnly }) => {
+const VariantBlock = ({ variant, onChange, onDelete, accent, readOnly, onNavigateToRef }) => {
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(variant.name);
   const upd = (k, v) => onChange({ ...variant, [k]: v });
@@ -916,6 +917,12 @@ const VariantBlock = ({ variant, onChange, onDelete, accent, readOnly }) => {
           </button>
         )}
       </div>
+
+      {variant.ref && (
+        <div className="px-5 py-2 border-b border-white/8 bg-white/[0.01]">
+          <RefTag refData={variant.ref} onNavigate={onNavigateToRef} />
+        </div>
+      )}
 
       <div className="p-5 space-y-6">
         <div>
@@ -1189,6 +1196,19 @@ const ControlGroup = ({ label, children }) => (
 // ── Custom X-axis tick that shows ONE label per cipher group ──
 // Used when cipherFilter === 'all' to avoid 33 overlapping variant labels.
 // Slight rotation (-25°) keeps adjacent single-variant groups from colliding.
+//
+// CIPHER_GROUP_LABEL_OVERRIDES: For a handful of cipher families, the
+// canonical cipher.name is too long when shown as a rotated axis label
+// in ALL mode (e.g. "Prime ECC (Qubit opt)"). We display a shorter,
+// pattern-consistent label that matches how variants are named
+// ("ECC-192 (Prime, Q opt)" → family label "ECC (Prime, Q opt)").
+// Tooltips, reference cards, legends, etc. keep the canonical name.
+const CIPHER_GROUP_LABEL_OVERRIDES = {
+  'ecc-qubit-opt': 'ECC (Prime, Q opt)',
+  'ecc-depth-opt': 'ECC (Prime, D opt)',
+  'binary-ecc':    'ECC (Binary)',
+};
+
 const CipherGroupTick = ({ x, y, payload, chartData, ciphers }) => {
   const variant = chartData.find(d => d.name === payload.value);
   if (!variant) return null;
@@ -1198,6 +1218,7 @@ const CipherGroupTick = ({ x, y, payload, chartData, ciphers }) => {
   if (idx !== mid) return null;     // only label the middle bar of each group
   const cipher = ciphers.find(c => c.name === variant.cipher);
   const color = cipher?.color || 'rgba(255,255,255,0.7)';
+  const label = (cipher && CIPHER_GROUP_LABEL_OVERRIDES[cipher.id]) || variant.cipher;
   // Steeper -45° rotation + textAnchor="end" prevents adjacent labels from
   // overlapping horizontally when many cipher families are shown in ALL mode.
   return (
@@ -1208,7 +1229,28 @@ const CipherGroupTick = ({ x, y, payload, chartData, ciphers }) => {
         transform="rotate(-45)"
         fill={color}
         style={{ fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: 500 }}>
-        {variant.cipher}
+        {label}
+      </text>
+    </g>
+  );
+};
+
+// Multi-line variant tick: when a variant name has a parenthetical qualifier
+// (e.g. "ECC-192 (Prime, D opt)" or "AES-128 (Q opt)"), splits it onto two
+// lines — main label above, qualifier below — so the rotated axis labels
+// stay compact and don't crowd each other.
+const MultilineVariantTick = ({ x, y, payload }) => {
+  const raw = String(payload?.value || '');
+  const m = raw.match(/^(.+?)\s*(\([^)]+\))\s*$/);
+  const line1 = m ? m[1] : raw;
+  const line2 = m ? m[2] : null;
+  return (
+    <g transform={`translate(${x}, ${y + 8})`}>
+      <text textAnchor="end" transform="rotate(-45)"
+            fill="rgba(255,255,255,0.5)"
+            style={{ fontFamily: 'JetBrains Mono', fontSize: 11 }}>
+        <tspan x="0" dy="0">{line1}</tspan>
+        {line2 && <tspan x="0" dy="1.15em" style={{ fontSize: 10, fillOpacity: 0.75 }}>{line2}</tspan>}
       </text>
     </g>
   );
@@ -1251,6 +1293,70 @@ const Pill = ({ color, children }) => (
   </span>
 );
 
+// RefTag: a small, clickable label showing the reference (citation) for a
+// cipher variant. Renders nothing if no ref is supplied. If the ref has a
+// URL, clicking it opens the paper in a new tab. Otherwise it falls back
+// to navigating to the in-app References page and highlighting the entry.
+//
+// Expected `ref` shape (stored on each variant in data.js):
+//   { id: "jang-2025-quantum-analysis",
+//     label: "Jang et al. 2025",            // short citation
+//     title: "Quantum Analysis of AES",     // full paper title
+//     url:   "https://doi.org/..." }        // optional; preferred when present
+//
+// `onNavigate` is the global goToReference handler from App (fallback only).
+const RefTag = ({ refData, onNavigate }) => {
+  if (!refData) return null;
+  const titleAttr = refData.title ? `${refData.label} — ${refData.title}` : refData.label;
+  const className = "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-mono " +
+                    "text-cyan-300 bg-cyan-400/8 border border-cyan-400/25 " +
+                    "hover:bg-cyan-400/15 hover:border-cyan-400/45 transition-colors " +
+                    "cursor-pointer max-w-full no-underline";
+  const inner = (
+    <>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      <span className="truncate">
+        {refData.label}
+        {refData.title && (
+          <span className="text-white/55"> — {refData.title}</span>
+        )}
+      </span>
+    </>
+  );
+  if (refData.url) {
+    return (
+      <a
+        href={refData.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        title={titleAttr}
+        className={className}>
+        {inner}
+      </a>
+    );
+  }
+  // No URL → non-interactive label (no icon, no link, no fallback navigation).
+  return (
+    <span
+      title={titleAttr}
+      className={className.replace('cursor-pointer', 'cursor-default')
+                          .replace('hover:bg-cyan-400/15 hover:border-cyan-400/45 transition-colors', '')}>
+      <span className="truncate">
+        {refData.label}
+        {refData.title && (
+          <span className="text-white/55"> — {refData.title}</span>
+        )}
+      </span>
+    </span>
+  );
+};
+
 // Figure: a quantum circuit diagram with a caption. The PNGs are line drawings
 // on transparent / white background; in dark mode we invert the colors so the
 // black lines/text become white-on-dark and stay legible.
@@ -1290,8 +1396,10 @@ const InlineFigure = ({ caption, children }) => (
 
 // One bibliography entry. Numbered, hanging-indent style typical of academic refs.
 // If `link` is provided, the title becomes a clickable anchor.
-const RefEntry = ({ index, authors, title, venue, year, link }) => (
-  <li className="flex gap-3 font-mono text-[13px] text-white/75 leading-relaxed">
+const RefEntry = ({ index, id, authors, title, venue, year, link, highlighted }) => (
+  <li id={id} className={`flex gap-3 font-mono text-[13px] leading-relaxed scroll-mt-24 px-2 py-1.5 rounded-md transition-colors duration-700 ${
+    highlighted ? 'bg-cyan-400/10 text-white/90 ring-1 ring-cyan-400/30' : 'text-white/75'
+  }`}>
     <span className="text-white/35 shrink-0 w-6 text-right">[{index}]</span>
     <div className="flex-1">
       <span className="text-white/80">{authors}.</span>{' '}
@@ -1309,9 +1417,12 @@ const RefEntry = ({ index, authors, title, venue, year, link }) => (
 );
 
 // Numbered reference list inside a Section. Resets numbering for each list.
-const ReferenceList = ({ entries }) => (
+const ReferenceList = ({ entries, highlightedId }) => (
   <ol className="space-y-3 list-none p-0 m-0">
-    {entries.map((e, i) => <RefEntry key={i} index={i + 1} {...e} />)}
+    {entries.map((e, i) => (
+      <RefEntry key={e.id || i} index={i + 1} {...e}
+                highlighted={highlightedId && e.id === highlightedId} />
+    ))}
   </ol>
 );
 
@@ -1654,13 +1765,10 @@ function SurfaceCodesPage() {
     >
       <Section heading="Surface Code in Brief">
         <p>
-          A surface code arranges physical qubits on a 2D lattice. Data qubits{' '}
-          hold the encoded logical information; measure qubits at plaquette centers
-          continuously read X and Z stabilizers, producing an error syndrome from which errors are decoded. The{' '}
-          <em>code distance d</em> is the minimum weight of a logical operator — larger <em>d</em> tolerates more
-          errors at the cost of more physical qubits per logical qubit. The figure below shows the standard
-          rotated layout at <em>d = 5</em>; the formulas the estimator actually uses are introduced in the
-          sections that follow.
+          A surface code spreads one logical qubit across a 2D lattice of physical qubits: data qubits hold the
+          information while measure qubits read X/Z stabilizers to detect errors. The <em>code distance d</em> sets
+          the error tolerance — larger <em>d</em> means more physical qubits per logical qubit. The figure shows the
+          rotated layout at <em>d = 5</em>.
         </p>
         <InlineFigure caption="A rotated surface-code logical qubit at distance d = 5. Data qubits (yellow) sit at lattice vertices; measure qubits (blue) at bulk plaquette centers and at boundary half-stabilizers (the rounded bumps along each edge) read X and Z stabilizers.">
           <svg viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg"
@@ -2111,7 +2219,7 @@ function QldpcCodesPage() {
   );
 }
 
-function ReferencesPage() {
+function ReferencesPage({ highlightedId }) {
   return (
     <PageShell
       kicker="Source publications"
@@ -2121,6 +2229,7 @@ function ReferencesPage() {
       <Section heading="Symmetric Ciphers — Grover Circuits">
         <ReferenceList entries={[
           {
+            id: "jang-2025-quantum-analysis",
             authors: "Kyungbae Jang, Anubhab Baksi, Hyunji Kim, Gyeongju Song, Hwajeong Seo, and Anupam Chattopadhyay",
             title:   "Quantum Analysis of AES",
             venue:   "IACR Communications in Cryptology, 2(1)",
@@ -2128,6 +2237,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.62056/ay11zo-3y",
           },
           {
+            id: "oh-2024-improved-quantum",
             authors: "Yujin Oh, Kyungbae Jang, and Hwajeong Seo",
             title:   "Improved Quantum Analysis of ARIA",
             venue:   "Cryptology ePrint Archive, Paper 2024/1986",
@@ -2135,6 +2245,7 @@ function ReferencesPage() {
             link:    "https://eprint.iacr.org/2024/1986",
           },
           {
+            id: "oh-2023-optimized-quantum",
             authors: "Yujin Oh, Kyungbae Jang, Yujin Yang, and Hwajeong Seo",
             title:   "Optimized Quantum Implementation of SEED",
             venue:   "Cryptology ePrint Archive, Paper 2023/1566",
@@ -2142,6 +2253,7 @@ function ReferencesPage() {
             link:    "https://eprint.iacr.org/2023/1566",
           },
           {
+            id: "jang-2024-depth-optimized",
             authors: "Kyungbae Jang, Yujin Oh, Minwoo Lee, Dukyoung Kim, and Hwajeong Seo",
             title:   "Depth Optimized Quantum Circuits for HIGHT and LEA",
             venue:   "Cryptology ePrint Archive, Paper 2024/1221 (Silicon Valley Cybersecurity Conference 2024)",
@@ -2149,6 +2261,15 @@ function ReferencesPage() {
             link:    "https://eprint.iacr.org/2024/1221",
           },
           {
+            id: "jang-2025-cham",
+            authors: "Kyungbae Jang, Yujin Oh, and Hwajeong Seo",
+            title:   "Depth-Optimized Quantum Implementation of CHAM",
+            venue:   "Cryptology ePrint Archive, Paper 2025/1188",
+            year:    "2025",
+            link:    "https://eprint.iacr.org/2025/1188",
+          },
+          {
+            id: "jang-2022-parallel-quantum",
             authors: "Kyungbae Jang, Gyeongju Song, Hyunjun Kim, Hyeokdong Kwon, Hyunji Kim, and Hwajeong Seo",
             title:   "Parallel Quantum Addition for Korean Block Ciphers",
             venue:   "Quantum Information Processing, 21:373",
@@ -2156,6 +2277,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.1007/s11128-022-03714-3",
           },
           {
+            id: "jang-2021-efficient-implementation",
             authors: "Kyungbae Jang, Gyeongju Song, Hyunjun Kim, Hyeokdong Kwon, Hyunji Kim, and Hwajeong Seo",
             title:   "Efficient Implementation of PRESENT and GIFT on Quantum Computers",
             venue:   "Applied Sciences, 11(11):4776",
@@ -2163,6 +2285,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.3390/app11114776",
           },
           {
+            id: "wang-2025-new-results",
             authors: "Siyi Wang, Kyungbae Jang, Anubhab Baksi, Sumanta Chakraborty, Bryan Lee, Anupam Chattopadhyay, and Hwajeong Seo",
             title:   "New Results in Quantum Analysis of LED: Featuring One and Two Oracle Attacks",
             venue:   "INDOCRYPT 2025 — Springer LNCS, pp. 339–364 (Cryptology ePrint Archive, Paper 2024/1982)",
@@ -2170,6 +2293,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.1007/978-3-032-13301-4_15",
           },
           {
+            id: "jang-2023-quantum-implementation",
             authors: "Kyungbae Jang, Anubhab Baksi, Jakub Breier, Hwajeong Seo, and Anupam Chattopadhyay",
             title:   "Quantum Implementation and Analysis of DEFAULT",
             venue:   "Cryptography and Communications",
@@ -2177,6 +2301,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.1007/s12095-023-00666-y",
           },
           {
+            id: "jang-2022-improved-quantum",
             authors: "Kyungbae Jang, Anubhab Baksi, Hyunji Kim, Hwajeong Seo, and Anupam Chattopadhyay",
             title:   "Improved Quantum Analysis of SPECK and LowMC",
             venue:   "INDOCRYPT 2022 — LNCS 13774, pp. 517–540 (Cryptology ePrint Archive, Paper 2022/1427)",
@@ -2184,6 +2309,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.1007/978-3-031-22912-1_23",
           },
           {
+            id: "jang-2024-quantum-implementation",
             authors: "Kyungbae Jang, Yujin Oh, Hyunji Kim, and Hwajeong Seo",
             title:   "Quantum Implementation of AIM: Aiming for Low-Depth",
             venue:   "Applied Sciences, 14(7):2824",
@@ -2191,6 +2317,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.3390/app14072824",
           },
           {
+            id: "oh-2024-depth-optimized",
             authors: "Yujin Oh, Kyungbae Jang, Anubhab Baksi, and Hwajeong Seo",
             title:   "Depth-Optimized Quantum Circuits for ASCON: AEAD and HASH",
             venue:   "Mathematics, 12(9):1337",
@@ -2198,18 +2325,36 @@ function ReferencesPage() {
             link:    "https://doi.org/10.3390/math12091337",
           },
           {
+            id: "bhaumik-2025-can-quantum",
             authors: "Anik Basu Bhaumik, Suman Dutta, Kyungbae Jang, Anubhab Baksi, Siyi Wang, Amit Saha, Hwajeong Seo, and Anupam Chattopadhyay",
             title:   "Can Quantum Break ZUC? Only with a Million Qubits and a Billion Years to Spare",
             venue:   "INDOCRYPT 2025 — Springer LNCS (Cryptology ePrint Archive, Paper 2025/1832)",
             year:    "2025",
             link:    "https://eprint.iacr.org/2025/1832",
           },
-        ]} />
+          {
+            id: "baksi-2021-quantum-rectangle-knot",
+            authors: "Anubhab Baksi, Kyungbae Jang, Gyeongju Song, Hwajeong Seo, and Zejun Xiang",
+            title:   "Quantum implementation and resource estimates for Rectangle and Knot",
+            venue:   "Quantum Information Processing, 20:395",
+            year:    "2021",
+            link:    "https://doi.org/10.1007/s11128-021-03307-6",
+          },
+          {
+            id: "jang-2021-grover-pipo",
+            authors: "Kyungbae Jang, Gyeongju Song, Hyeokdong Kwon, Siwoo Uhm, Hyunji Kim, Wai-Kong Lee, and Hwajeong Seo",
+            title:   "Grover on PIPO",
+            venue:   "Electronics, 10(10):1194",
+            year:    "2021",
+            link:    "https://www.mdpi.com/2079-9292/10/10/1194",
+          },
+        ]} highlightedId={highlightedId} />
       </Section>
 
       <Section heading="Hash Functions — Grover Preimage Circuits">
         <ReferenceList entries={[
           {
+            id: "jang-2025-improved-quantum",
             authors: "Kyungbae Jang, Hwajeong Seo, and Anupam Chattopadhyay",
             title:   "Improved Quantum Cryptanalysis of MD5 and SHA-1",
             venue:   "IEEE Access, Volume 14",
@@ -2217,6 +2362,7 @@ function ReferencesPage() {
             link:    "https://ieeexplore.ieee.org/document/11474848/",
           },
           {
+            id: "jang-2025-quantum-implementation",
             authors: "Kyungbae Jang, Sejin Lim, Yujin Oh, Hyunjun Kim, Anubhab Baksi, Sumanta Chakraborty, and Hwajeong Seo",
             title:   "Quantum Implementation and Analysis of SHA-2 and SHA-3",
             venue:   "IEEE Transactions on Emerging Topics in Computing, 13(2):919–934",
@@ -2224,18 +2370,20 @@ function ReferencesPage() {
             link:    "https://doi.org/10.1109/TETC.2025.3546648",
           },
           {
+            id: "oh-2025-quantum-security",
             authors: "Yujin Oh, Kyungbae Jang, and Hwajeong Seo",
             title:   "Quantum Security Evaluation of ASCON",
             venue:   "Cryptology ePrint Archive, Paper 2025/260",
             year:    "2025",
             link:    "https://eprint.iacr.org/2025/260",
           },
-        ]} />
+        ]} highlightedId={highlightedId} />
       </Section>
 
       <Section heading="Public-Key — Shor Circuits">
         <ReferenceList entries={[
           {
+            id: "kim-2026-new-quantum",
             authors: "Hyunji Kim, Kyungbae Jang, Siyi Wang, Anubhab Baksi, Gyeongju Song, Hwajeong Seo, and Anupam Chattopadhyay",
             title:   "New Quantum Circuits for ECDLP: Breaking Prime Elliptic Curve Cryptography in Minutes",
             venue:   "Cryptology ePrint Archive, Paper 2026/106",
@@ -2243,40 +2391,44 @@ function ReferencesPage() {
             link:    "https://eprint.iacr.org/2026/106",
           },
           {
+            id: "jang-2025-new-quantum",
             authors: "Kyungbae Jang, Vikas Srivastava, Anubhab Baksi, Santanu Sarkar, and Hwajeong Seo",
             title:   "New Quantum Cryptanalysis of Binary Elliptic Curves",
             venue:   "IACR Transactions on Cryptographic Hardware and Embedded Systems (TCHES), 2025(2):781–804",
             year:    "2025",
             link:    "https://doi.org/10.46586/tches.v2025.i2.781-804",
           },
-        ]} />
+        ]} highlightedId={highlightedId} />
       </Section>
 
       <Section heading="Code-Based PQC — Grover + ISD">
         <ReferenceList entries={[
           {
+            id: "seo-2025-analysis-quantum",
             authors: "Kyung-Bae Jang and Hwa-Jeong Seo",
             title:   "Analysis of Quantum Attack Cost for Code-Based Cryptographic Algorithms",
-            venue:   "Conference on Information Security and Cryptography Winter 2025 (CISC-W'25), 한국정보보호학회 동계학술대회",
+            venue:   "Conference on Information Security and Cryptography Winter 2025 (CISC-W'25)",
             year:    "2025",
           },
-        ]} />
+        ]} highlightedId={highlightedId} />
       </Section>
 
       <Section heading="Lattice-Based PQC — Grover + Lattice Sieve">
         <ReferenceList entries={[
           {
+            id: "kim-2025-concrete-quantum",
             authors: "Hyunji Kim, Kyungbae Jang, Anubhab Baksi, Siyi Wang, Sumanta Chakraborty, Anupam Chattopadhyay, and Hwajeong Seo",
             title:   "Concrete Quantum Sieve for Shortest Vector Problem with Application to Lattice-based Cryptography",
             venue:   "Under submission",
             year:    "2025",
           },
-        ]} />
+        ]} highlightedId={highlightedId} />
       </Section>
 
       <Section heading="Physical-Cost Models">
         <ReferenceList entries={[
           {
+            id: "kitaev-2005-universal-quantum",
             authors: "Sergey Bravyi and Alexei Kitaev",
             title:   "Universal quantum computation with ideal Clifford gates and noisy ancillas",
             venue:   "Physical Review A — Atomic, Molecular, and Optical Physics, 71(2):022316",
@@ -2284,6 +2436,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.1103/PhysRevA.71.022316",
           },
           {
+            id: "fowler-2012-surface-codes",
             authors: "Austin G. Fowler, Matteo Mariantoni, John M. Martinis, and Andrew N. Cleland",
             title:   "Surface codes: Towards practical large-scale quantum computation",
             venue:   "Physical Review A — Atomic, Molecular, and Optical Physics, 86(3):032324",
@@ -2291,6 +2444,7 @@ function ReferencesPage() {
             link:    "https://doi.org/10.1103/PhysRevA.86.032324",
           },
           {
+            id: "webster-2026-pinnacle-architecture",
             authors: "Paul Webster, Lucas Berent, Omprakash Chandra, Evan T. Hockings, Nouédyn Baspin, Felix Thomsen, Samuel C. Smith, and Lawrence Z. Cohen",
             title:   "The pinnacle architecture: Reducing the cost of breaking RSA-2048 to 100,000 physical qubits using quantum LDPC codes",
             venue:   "arXiv preprint arXiv:2602.11457",
@@ -2298,13 +2452,37 @@ function ReferencesPage() {
             link:    "https://arxiv.org/abs/2602.11457",
           },
           {
+            id: "webster-2025-explicit-construction",
             authors: "Paul Webster, Samuel C. Smith, and Lawrence Z. Cohen",
             title:   "Explicit construction of low-overhead gadgets for gates on quantum LDPC codes",
             venue:   "arXiv preprint arXiv:2511.15989",
             year:    "2025",
             link:    "https://arxiv.org/abs/2511.15989",
           },
-        ]} />
+        ]} highlightedId={highlightedId} />
+      </Section>
+    </PageShell>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CONTACT PAGE
+// Email-only contact information and an invitation to submit new
+// cipher variants or resource estimates for inclusion in the catalogue.
+// ─────────────────────────────────────────────────────────────────
+function ContactPage() {
+  return (
+    <PageShell
+      kicker="Get in touch"
+      title="Contact"
+      lead="Questions, corrections, and comments on the estimator are welcome. If you would like to add a new cipher variant or submit your own quantum-attack resource estimate for inclusion in the catalogue, please get in touch by email."
+    >
+      <Section heading="Email">
+        <ul className="list-none space-y-1 text-white/85">
+          <li>Kyungbae Jang: starj1023@gmail.com</li>
+          <li>Hwajeong Seo: hwajeong84@gmail.com</li>
+          <li>Anupam Chattopadhyay: anupam@ntu.edu.sg</li>
+        </ul>
       </Section>
     </PageShell>
   );
@@ -2336,6 +2514,43 @@ function App() {
       setExpandedGroups(prev => new Set(prev).add('Physical Estimation'));
     }
   };
+  // Reference highlight state: when set, the corresponding RefEntry in
+  // ReferencesPage renders with a cyan background ring. Cleared after a
+  // short timeout so the page eventually settles back to its plain state.
+  const [highlightedRefId, setHighlightedRefId] = useState(null);
+  // Row currently hovered in the chart (bar or scatter). Used to drive the
+  // reference panel rendered below the chart.
+  const [hoveredChartRow, setHoveredChartRow] = useState(null);
+  // Whether the cursor is currently over a scatter POINT (not just inside the
+  // chart area). ScatterChart keeps its tooltip active for the nearest point
+  // whenever the cursor is anywhere in the plot (Recharts getMouseInfo returns
+  // coords for the whole in-range area, not just dots), so we gate the tooltip
+  // on this flag — set true on a dot's onMouseOver, false on its onMouseOut —
+  // to get bar-like behavior: tooltip shows only while actually over a point.
+  const [scatterHover, setScatterHover] = useState(false);
+
+  // Whenever the chart's content changes (filter mode, chart shape, or
+  // scope), clear the hover overlay so it doesn't show a reference for a
+  // bar/point that's no longer on screen. selectedCipherId is intentionally
+  // NOT a dep — picking a cipher for the detail view below should leave the
+  // chart's reference panel untouched.
+  useEffect(() => {
+    setHoveredChartRow(null);
+  }, [cipherFilter, chartShape, vizScope]);
+  const goToReference = (refId) => {
+    if (!refId) return;
+    setView('refs');
+    setHighlightedRefId(refId);
+    // Scroll + clear highlight on next frame so the DOM has time to mount
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(refId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+    // Fade highlight away after a few seconds
+    setTimeout(() => setHighlightedRefId(null), 3000);
+  };
   // Click on the top banner → reset to a clean Resource Estimator screen
   // (no cipher picked, no menu group expanded). Display preferences are left
   // alone so the user doesn't lose their chart layout choices.
@@ -2352,6 +2567,13 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  // Chart hover-cursor colors, derived from the active theme. Recharts passes
+  // these straight to SVG fill/stroke; we compute concrete rgba here (rather
+  // than relying on CSS vars inside Recharts' cursor) so the bar background
+  // highlight and the scatter crosshair stay visible in light mode too.
+  const chartCursorFill   = theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.03)';
+  const chartCursorStroke = theme === 'light' ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.2)';
 
   const [dataSource] = useState(initial.source);
   const [vizMetric, setVizMetric] = useState('qubits');
@@ -2452,7 +2674,7 @@ function App() {
     sourceCiphers.forEach(c => c.variants.forEach(v => {
       const src = vizScope === 'logical' ? v.logical : computePhysical(v, currentTc, currentHw, physicalCode);
       const fields = (vizScope === 'logical' ? LOGICAL_FIELDS : PHYSICAL_FIELDS).filter(f => !f.editOnly);
-      const row = { name: v.name, cipher: c.name, color: c.color };
+      const row = { name: v.name, cipher: c.name, color: c.color, ref: v.ref };
       fields.forEach(f => {
         const p = parseValue(src?.[f.key]);
         if (p !== null && p > 0) {
@@ -2488,7 +2710,7 @@ function App() {
       if (xRaw > 0 && yRaw > 0) {
         // Plot raw values; Recharts axes use scale="log" for the log mapping.
         rows.push({
-          name: v.name, cipher: c.name, color: c.color,
+          name: v.name, cipher: c.name, color: c.color, ref: v.ref,
           x: xRaw,
           y: yRaw,
           _rawX: xRaw, _rawY: yRaw
@@ -2727,7 +2949,8 @@ function App() {
                         { id: 'physical-qldpc',   label: 'QLDPC codes',   desc: 'Block-encoded pipeline' },
                       ],
                     },
-                    { id: 'refs', label: 'References', icon: 'db', desc: 'Source publications' },
+                    { id: 'refs',    label: 'References', icon: 'db',   desc: 'Source publications' },
+                    { id: 'contact', label: 'Contact',    icon: 'mail', desc: 'Get in touch' },
                   ].map((item, idx) => {
                     // Grouped (nested) item — clickable header with chevron + collapsible children
                     if (item.children) {
@@ -2862,6 +3085,7 @@ function App() {
                     <VariantBlock key={v.id} variant={v} accent={selectedCipher.color}
                       onChange={(nv) => updateVariant(selectedCipher.id, v.id, nv)}
                       onDelete={() => deleteVariant(selectedCipher.id, v.id)}
+                      onNavigateToRef={goToReference}
                       readOnly={false} />
                   ))}
                 </div>
@@ -2896,10 +3120,20 @@ function App() {
                     </>
                   )}
                   <ControlGroup label="Show">
-                    <SegBtn active={cipherFilter === 'selected'} onClick={() => setCipherFilter('selected')}>
+                    <SegBtn active={cipherFilter === 'selected'} onClick={() => {
+                      // Clear sticky hover state synchronously so the reference panel
+                      // from a previous view doesn't briefly persist after the switch.
+                      // Also handles the "click while already in this mode" case where
+                      // the cipherFilter useEffect wouldn't otherwise fire.
+                      setHoveredChartRow(null);
+                      setCipherFilter('selected');
+                    }}>
                       Selected
                     </SegBtn>
-                    <SegBtn active={cipherFilter === 'all'} onClick={() => setCipherFilter('all')}>All</SegBtn>
+                    <SegBtn active={cipherFilter === 'all'} onClick={() => {
+                      setHoveredChartRow(null);
+                      setCipherFilter('all');
+                    }}>All</SegBtn>
                   </ControlGroup>
                   <ControlGroup label="Chart">
                     <SegBtn active={chartShape === 'bar'} onClick={() => setChartShape('bar')}>Bar</SegBtn>
@@ -3110,18 +3344,25 @@ function App() {
                           {chartShape === 'scatter' ? `${scatterData.length} variants plotted` : `${chartData.length} variants · ${vizScope} resources`}
                         </div>
                       </div>
-                      <div style={{ width: '100%', height: 500 }}>
+                      <div style={{ width: '100%', height: 420, position: 'relative' }}>
                         <ResponsiveContainer>
                           {chartShape === 'bar' ? (
-                            <BarChart data={chartData} margin={{ top: 20, right: 20, bottom: cipherFilter === 'all' ? 130 : 70, left: 55 }}>
+                            <BarChart data={chartData}
+                              margin={{ top: 20, right: 20, bottom: cipherFilter === 'all' ? 85 : 35, left: 55 }}
+                              onMouseMove={(state) => {
+                                const row = state?.activePayload?.[0]?.payload;
+                                if (row) setHoveredChartRow(row);
+                              }}>
                               <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" vertical={false} />
                               {cipherFilter === 'all' ? (
                                 <XAxis dataKey="name" stroke="rgba(255,255,255,0.15)" interval={0}
                                   tickLine={false}
                                   tick={(props) => <CipherGroupTick {...props} chartData={chartData} ciphers={ciphers} />} />
                               ) : (
-                                <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
-                                  stroke="rgba(255,255,255,0.15)" angle={-45} textAnchor="end" height={70} interval={0} />
+                                <XAxis dataKey="name"
+                                  stroke="rgba(255,255,255,0.15)" angle={-45} textAnchor="end" height={60} interval={0}
+                                  tickLine={false}
+                                  tick={(props) => <MultilineVariantTick {...props} />} />
                               )}
                               <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
                                 stroke="rgba(255,255,255,0.15)"
@@ -3137,13 +3378,25 @@ function App() {
                                   value: currentMetric.label,
                                   angle: -90, position: 'left', offset: 10,
                                   style: { fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: 'JetBrains Mono' } }} />
-                              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} content={<ChartTooltip logScale={false} />} />
-                              <Bar dataKey={vizMetric} name={currentMetric.label} radius={[4, 4, 0, 0]}>
+                              <Tooltip cursor={{ fill: chartCursorFill }} content={<ChartTooltip logScale={false} />} />
+                              <Bar dataKey={vizMetric} name={currentMetric.label} radius={[4, 4, 0, 0]}
+                                   onMouseOver={(data) => {
+                                     // Reference panel only (sticky). Tooltip itself is the
+                                     // built-in cursor-following Recharts <Tooltip> above.
+                                     const row = data?.payload || data;
+                                     if (row) setHoveredChartRow(row);
+                                   }}>
                                 {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
                               </Bar>
                             </BarChart>
                           ) : (
-                            <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 55 }}>
+                            <ScatterChart margin={{ top: 20, right: 30, bottom: 35, left: 55 }}
+                              onMouseMove={(state) => {
+                                // Sticky reference panel only. Tooltip visibility is driven by Scatter.onMouseOver/Out.
+                                const row = state?.activePayload?.[0]?.payload;
+                                if (row) setHoveredChartRow(row);
+                              }}
+                              onMouseLeave={() => setScatterHover(false)}>
                               <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" />
                               <XAxis type="number" dataKey="x" name={scatterXField?.label}
                                 scale="log" domain={['auto', 'auto']} allowDataOverflow={false}
@@ -3162,9 +3415,10 @@ function App() {
                                 label={{ value: scatterYField?.label,
                                   angle: -90, position: 'left', offset: 10,
                                   style: { fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: 'JetBrains Mono' } }} />
-                              <Tooltip cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeDasharray: '3 3' }}
+                              <Tooltip cursor={scatterHover ? { stroke: chartCursorStroke, strokeDasharray: '3 3' } : false}
+                                wrapperStyle={{ visibility: scatterHover ? 'visible' : 'hidden' }}
                                 content={({ active, payload }) => {
-                                  if (!active || !payload?.length) return null;
+                                  if (!scatterHover || !active || !payload?.length) return null;
                                   const d = payload[0].payload;
                                   return (
                                     <div className="rounded-lg border px-4 py-3 backdrop-blur-md shadow-2xl"
@@ -3174,7 +3428,9 @@ function App() {
                                            color:       'var(--tooltip-value)',
                                          }}>
                                       <div className="font-mono text-lg" style={{ color: d.color }}>{d.name}</div>
-                                      <div className="font-mono text-xs mb-2" style={{ color: 'var(--tooltip-label)' }}>{d.cipher}</div>
+                                      {d.cipher && d.cipher !== d.name && (
+                                        <div className="font-mono text-xs mb-2" style={{ color: 'var(--tooltip-label)' }}>{d.cipher}</div>
+                                      )}
                                       <div className="font-mono text-xs space-y-1" style={{ color: 'var(--tooltip-name)' }}>
                                         <div>{scatterXField?.label}: <span style={{ color: 'var(--tooltip-value)' }}>{scatterXField?.key === 'runtime' ? formatRuntime(d._rawX) : formatValue(d._rawX)}</span></div>
                                         <div>{scatterYField?.label}: <span style={{ color: 'var(--tooltip-value)' }}>{scatterYField?.key === 'runtime' ? formatRuntime(d._rawY) : formatValue(d._rawY)}</span></div>
@@ -3182,13 +3438,70 @@ function App() {
                                     </div>
                                   );
                                 }} />
-                              <Scatter data={scatterData}>
+                              <Scatter data={scatterData}
+                                       onMouseOver={(payload) => {
+                                         // Cursor entered a point: show tooltip + update reference panel.
+                                         if (payload) {
+                                           setHoveredChartRow(payload);
+                                           setScatterHover(true);
+                                         }
+                                       }}
+                                       onMouseOut={() => setScatterHover(false)}>
                                 {scatterData.map((d, i) => <Cell key={i} fill={d.color} />)}
                               </Scatter>
                             </ScatterChart>
                           )}
                         </ResponsiveContainer>
+
                       </div>
+
+                      {/* ── Reference panel (below chart) ───
+                          Placed below the chart container. Updates when the
+                          cursor enters a new bar/point and is otherwise sticky
+                          (the last hovered ref stays put once the cursor
+                          leaves until a new one is hovered). mt-1 keeps it
+                          tight against the x-axis labels. */}
+                      {hoveredChartRow && (hoveredChartRow.ref || hoveredChartRow.name) && (
+                        <div className="mt-1 flex">
+                          <div className="inline-flex items-center gap-3 whitespace-nowrap px-3 py-1.5 rounded-md border backdrop-blur-sm"
+                               style={{
+                                 background:  'var(--tooltip-bg)',
+                                 borderColor: 'var(--tooltip-border)',
+                                 maxWidth: '100%',
+                               }}>
+                            <span className="font-mono text-[12px] shrink-0" style={{ color: hoveredChartRow.color }}>
+                              {hoveredChartRow.name}
+                            </span>
+                            {hoveredChartRow.cipher && hoveredChartRow.cipher !== hoveredChartRow.name && (
+                              <span className="font-mono text-[10.5px] shrink-0" style={{ color: 'var(--tooltip-label)' }}>
+                                {hoveredChartRow.cipher}
+                              </span>
+                            )}
+                            {hoveredChartRow.ref && (hoveredChartRow.ref.label || hoveredChartRow.ref.title) ? (
+                              <div className="font-mono text-[11.5px] min-w-0 truncate">
+                                {hoveredChartRow.ref.url ? (
+                                  <a href={hoveredChartRow.ref.url} target="_blank" rel="noopener noreferrer"
+                                     className="inline-flex items-center gap-1.5 text-cyan-300 hover:text-cyan-200 underline decoration-cyan-300/30 hover:decoration-cyan-200/60">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                      <polyline points="15 3 21 3 21 9"/>
+                                      <line x1="10" y1="14" x2="21" y2="3"/>
+                                    </svg>
+                                    <span className="truncate">{hoveredChartRow.ref.label}{hoveredChartRow.ref.title ? ` — ${hoveredChartRow.ref.title}` : ''}</span>
+                                  </a>
+                                ) : (
+                                  <span style={{ color: 'var(--tooltip-name)' }}>
+                                    {hoveredChartRow.ref.label}{hoveredChartRow.ref.title ? ` — ${hoveredChartRow.ref.title}` : ''}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="font-mono text-[11px] shrink-0" style={{ color: 'var(--tooltip-sub)' }}>no reference recorded</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -3222,7 +3535,7 @@ function App() {
                 {/* Read-only data table when in view mode and a cipher is selected.
                     Position: AFTER the legend so users can pick from the legend → see details below. */}
                 {!IS_EDIT && selectedCipher && (
-                  <div className="space-y-4 pt-4">
+                  <div className="space-y-4 -mt-3">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full" style={{ background: selectedCipher.color }} />
                       <h3 className="font-mono text-3xl text-white">{selectedCipher.name}</h3>
@@ -3231,7 +3544,9 @@ function App() {
                     <div className="space-y-4">
                       {selectedCipher.variants.map(v => (
                         <VariantBlock key={v.id} variant={v} accent={selectedCipher.color}
-                          onChange={() => {}} onDelete={() => {}} readOnly={true} />
+                          onChange={() => {}} onDelete={() => {}}
+                          onNavigateToRef={goToReference}
+                          readOnly={true} />
                       ))}
                     </div>
                   </div>
@@ -3248,7 +3563,9 @@ function App() {
             ) : view === 'physical-qldpc' ? (
               <QldpcCodesPage />
             ) : view === 'refs' ? (
-              <ReferencesPage />
+              <ReferencesPage highlightedId={highlightedRefId} />
+            ) : view === 'contact' ? (
+              <ContactPage />
             ) : null}
           </main>
         </div>

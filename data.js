@@ -21,7 +21,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "2^25",
             "runtime": "2^95"
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-analysis",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Analysis of AES",
+            "url": "https://doi.org/10.62056/ay11zo-3y"
+          }
         },
         {
           "id": "aes-192",
@@ -38,7 +44,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "2^26",
             "runtime": "2^127"
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-analysis",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Analysis of AES",
+            "url": "https://doi.org/10.62056/ay11zo-3y"
+          }
         },
         {
           "id": "aes-256",
@@ -55,7 +67,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "2^27",
             "runtime": "2^159"
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-analysis",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Analysis of AES",
+            "url": "https://doi.org/10.62056/ay11zo-3y"
+          }
         }
       ]
     },
@@ -72,14 +90,20 @@ window.CIPHER_DATA = {
             "qubits": "9537",
             "clifford": "2^82.3",
             "tGates": "2^81.3",
-            "tDepth": "1.47\u00b72^72",
+            "tDepth": "1.47·2^72",
             "measurementGates": "0"
           },
           "physical": {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2024-improved-quantum",
+            "label": "Oh et al. 2024",
+            "title": "Improved Quantum Analysis of ARIA",
+            "url": "https://eprint.iacr.org/2024/1986"
+          }
         },
         {
           "id": "v_tjsrtku",
@@ -89,14 +113,20 @@ window.CIPHER_DATA = {
             "qubits": "20865",
             "clifford": "2^114.5",
             "tGates": "2^113.5",
-            "tDepth": "1.67\u00b72^104",
+            "tDepth": "1.67·2^104",
             "measurementGates": "0"
           },
           "physical": {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2024-improved-quantum",
+            "label": "Oh et al. 2024",
+            "title": "Improved Quantum Analysis of ARIA",
+            "url": "https://eprint.iacr.org/2024/1986"
+          }
         },
         {
           "id": "v_p82ovr0",
@@ -106,14 +136,20 @@ window.CIPHER_DATA = {
             "qubits": "22657",
             "clifford": "2^146.7",
             "tGates": "2^145.7",
-            "tDepth": "1.86\u00b72^136",
+            "tDepth": "1.86·2^136",
             "measurementGates": "0"
           },
           "physical": {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2024-improved-quantum",
+            "label": "Oh et al. 2024",
+            "title": "Improved Quantum Analysis of ARIA",
+            "url": "https://eprint.iacr.org/2024/1986"
+          }
         }
       ]
     },
@@ -137,7 +173,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2023-optimized-quantum",
+            "label": "Oh et al. 2023",
+            "title": "Optimized Quantum Implementation of SEED",
+            "url": "https://eprint.iacr.org/2023/1566"
+          }
         }
       ]
     },
@@ -161,7 +203,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2024-depth-optimized",
+            "label": "Jang et al. 2024",
+            "title": "Depth Optimized Quantum Circuits for HIGHT and LEA",
+            "url": "https://eprint.iacr.org/2024/1221"
+          }
         }
       ]
     },
@@ -185,7 +233,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2024-depth-optimized",
+            "label": "Jang et al. 2024",
+            "title": "Depth Optimized Quantum Circuits for HIGHT and LEA",
+            "url": "https://eprint.iacr.org/2024/1221"
+          }
         },
         {
           "id": "v_4ugf3e9",
@@ -202,7 +256,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2024-depth-optimized",
+            "label": "Jang et al. 2024",
+            "title": "Depth Optimized Quantum Circuits for HIGHT and LEA",
+            "url": "https://eprint.iacr.org/2024/1221"
+          }
         },
         {
           "id": "v_c6egbmq",
@@ -219,7 +279,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2024-depth-optimized",
+            "label": "Jang et al. 2024",
+            "title": "Depth Optimized Quantum Circuits for HIGHT and LEA",
+            "url": "https://eprint.iacr.org/2024/1221"
+          }
         }
       ]
     },
@@ -243,7 +309,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-cham",
+            "label": "Jang et al. 2025",
+            "title": "Depth-Optimized Quantum Implementation of CHAM",
+            "url": "https://eprint.iacr.org/2025/1188"
+          }
         },
         {
           "id": "v_wf8jh9f",
@@ -260,7 +332,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-cham",
+            "label": "Jang et al. 2025",
+            "title": "Depth-Optimized Quantum Implementation of CHAM",
+            "url": "https://eprint.iacr.org/2025/1188"
+          }
         },
         {
           "id": "v_5vkchl2",
@@ -277,7 +355,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-cham",
+            "label": "Jang et al. 2025",
+            "title": "Depth-Optimized Quantum Implementation of CHAM",
+            "url": "https://eprint.iacr.org/2025/1188"
+          }
         }
       ]
     },
@@ -301,7 +385,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2021-efficient-implementation",
+            "label": "Jang et al. 2021",
+            "title": "Efficient Implementation of PRESENT and GIFT on Quantum Computers",
+            "url": "https://doi.org/10.3390/app11114776"
+          }
         },
         {
           "id": "gift-128",
@@ -318,7 +408,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2021-efficient-implementation",
+            "label": "Jang et al. 2021",
+            "title": "Efficient Implementation of PRESENT and GIFT on Quantum Computers",
+            "url": "https://doi.org/10.3390/app11114776"
+          }
         }
       ]
     },
@@ -342,7 +438,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2021-efficient-implementation",
+            "label": "Jang et al. 2021",
+            "title": "Efficient Implementation of PRESENT and GIFT on Quantum Computers",
+            "url": "https://doi.org/10.3390/app11114776"
+          }
         },
         {
           "id": "present-128",
@@ -359,7 +461,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2021-efficient-implementation",
+            "label": "Jang et al. 2021",
+            "title": "Efficient Implementation of PRESENT and GIFT on Quantum Computers",
+            "url": "https://doi.org/10.3390/app11114776"
+          }
         }
       ]
     },
@@ -373,34 +481,46 @@ window.CIPHER_DATA = {
           "name": "LED-64",
           "attack": "Grover + Exhaustive key search",
           "logical": {
-            "qubits": "1.01\u00b72^7",
+            "qubits": "1.01·2^7",
             "clifford": "2^47.3",
             "tGates": "2^46.5",
-            "tDepth": "1.57\u00b72^41",
+            "tDepth": "1.57·2^41",
             "measurementGates": "0"
           },
           "physical": {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "wang-2025-new-results",
+            "label": "Wang et al. 2025",
+            "title": "New Results in Quantum Analysis of LED",
+            "url": "https://doi.org/10.1007/978-3-032-13301-4_15"
+          }
         },
         {
           "id": "v_1whjmgk",
           "name": "LED-128",
           "attack": "Grover + Exhaustive key search",
           "logical": {
-            "qubits": "1.00\u00b72^8",
+            "qubits": "1.00·2^8",
             "clifford": "2^79.9",
             "tGates": "2^79",
-            "tDepth": "1.18\u00b72^74",
+            "tDepth": "1.18·2^74",
             "measurementGates": "0"
           },
           "physical": {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "wang-2025-new-results",
+            "label": "Wang et al. 2025",
+            "title": "New Results in Quantum Analysis of LED",
+            "url": "https://doi.org/10.1007/978-3-032-13301-4_15"
+          }
         }
       ]
     },
@@ -424,7 +544,66 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2023-quantum-implementation",
+            "label": "Jang et al. 2023",
+            "title": "Quantum Implementation and Analysis of DEFAULT",
+            "url": "https://doi.org/10.1007/s12095-023-00666-y"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pipo",
+      "name": "PIPO",
+      "color": "#a16207",
+      "variants": [
+        {
+          "id": "v_d0bf9b3",
+          "name": "PIPO-64/128",
+          "attack": "Grover + Exhaustive key search",
+          "logical": {
+            "qubits": "385",
+            "clifford": "2^80.4",
+            "tGates": "2^79.7",
+            "tDepth": "2^73.8",
+            "measurementGates": "0"
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": "",
+          "ref": {
+            "id": "jang-2021-grover-pipo",
+            "label": "Jang et al. 2021",
+            "title": "Grover on PIPO",
+            "url": "https://www.mdpi.com/2079-9292/10/10/1194"
+          }
+        },
+        {
+          "id": "v_a8418e5",
+          "name": "PIPO-64/256",
+          "attack": "Grover + Exhaustive key search",
+          "logical": {
+            "qubits": "1281",
+            "clifford": "2^148.7",
+            "tGates": "2^148.5",
+            "tDepth": "2^138.2",
+            "measurementGates": "0"
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": "",
+          "ref": {
+            "id": "jang-2021-grover-pipo",
+            "label": "Jang et al. 2021",
+            "title": "Grover on PIPO",
+            "url": "https://www.mdpi.com/2079-9292/10/10/1194"
+          }
         }
       ]
     },
@@ -448,7 +627,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         },
         {
           "id": "v_7bc9zgj",
@@ -465,7 +650,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         },
         {
           "id": "v_q24uvki",
@@ -482,7 +673,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         },
         {
           "id": "v_prs74co",
@@ -499,7 +696,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         },
         {
           "id": "v_21kxsaj",
@@ -516,7 +719,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         },
         {
           "id": "v_ylj74xg",
@@ -533,7 +742,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         }
       ]
     },
@@ -557,7 +772,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         },
         {
           "id": "v_v9x7ux8",
@@ -574,7 +795,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         },
         {
           "id": "v_2xv4vza",
@@ -591,7 +818,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2022-improved-quantum",
+            "label": "Jang et al. 2022",
+            "title": "Improved Quantum Analysis of SPECK and LowMC",
+            "url": "https://doi.org/10.1007/978-3-031-22912-1_23"
+          }
         }
       ]
     },
@@ -615,7 +848,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2024-quantum-implementation",
+            "label": "Jang et al. 2024",
+            "title": "Quantum Implementation of AIM",
+            "url": "https://doi.org/10.3390/app14072824"
+          }
         },
         {
           "id": "v_maxv6su",
@@ -632,7 +871,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2024-quantum-implementation",
+            "label": "Jang et al. 2024",
+            "title": "Quantum Implementation of AIM",
+            "url": "https://doi.org/10.3390/app14072824"
+          }
         },
         {
           "id": "v_57vunld",
@@ -649,7 +894,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2024-quantum-implementation",
+            "label": "Jang et al. 2024",
+            "title": "Quantum Implementation of AIM",
+            "url": "https://doi.org/10.3390/app14072824"
+          }
         }
       ]
     },
@@ -673,7 +924,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2025-quantum-security",
+            "label": "Oh et al. 2025",
+            "title": "Quantum Security Evaluation of ASCON",
+            "url": "https://eprint.iacr.org/2025/260"
+          }
         },
         {
           "id": "v_1x5fxqm",
@@ -690,7 +947,112 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2025-quantum-security",
+            "label": "Oh et al. 2025",
+            "title": "Quantum Security Evaluation of ASCON",
+            "url": "https://eprint.iacr.org/2025/260"
+          }
+        }
+      ]
+    },
+    {
+      "id": "knot-aead",
+      "name": "KNOT-AEAD",
+      "color": "#b45309",
+      "variants": [
+        {
+          "id": "v_ecefbf3",
+          "name": "KNOT-AEAD (128, 256, 64)",
+          "attack": "Grover + Exhaustive key search",
+          "logical": {
+            "qubits": "353",
+            "clifford": "1.516·2^82",
+            "tGates": "1.193·2^82",
+            "tDepth": "1.346·2^81",
+            "measurementGates": "0"
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": "",
+          "ref": {
+            "id": "baksi-2021-quantum-rectangle-knot",
+            "label": "Baksi et al. 2021",
+            "title": "Quantum implementation and resource estimates for Rectangle and Knot",
+            "url": "https://link.springer.com/article/10.1007/s11128-021-03307-6"
+          }
+        },
+        {
+          "id": "v_6fb4e72",
+          "name": "KNOT-AEAD (128, 384, 192)",
+          "attack": "Grover + Exhaustive key search",
+          "logical": {
+            "qubits": "481",
+            "clifford": "1.389·2^83",
+            "tGates": "1.087·2^83",
+            "tDepth": "1.234·2^82",
+            "measurementGates": "0"
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": "",
+          "ref": {
+            "id": "baksi-2021-quantum-rectangle-knot",
+            "label": "Baksi et al. 2021",
+            "title": "Quantum implementation and resource estimates for Rectangle and Knot",
+            "url": "https://link.springer.com/article/10.1007/s11128-021-03307-6"
+          }
+        },
+        {
+          "id": "v_d9f8bae",
+          "name": "KNOT-AEAD (192, 384, 96)",
+          "attack": "Grover + Exhaustive key search",
+          "logical": {
+            "qubits": "481",
+            "clifford": "1.633·2^115",
+            "tGates": "1.279·2^115",
+            "tDepth": "1.450·2^114",
+            "measurementGates": "0"
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": "",
+          "ref": {
+            "id": "baksi-2021-quantum-rectangle-knot",
+            "label": "Baksi et al. 2021",
+            "title": "Quantum implementation and resource estimates for Rectangle and Knot",
+            "url": "https://link.springer.com/article/10.1007/s11128-021-03307-6"
+          }
+        },
+        {
+          "id": "v_415392d",
+          "name": "KNOT-AEAD (256, 512, 128)",
+          "attack": "Grover + Exhaustive key search",
+          "logical": {
+            "qubits": "609",
+            "clifford": "1.419·2^148",
+            "tGates": "1.109·2^148",
+            "tDepth": "1.260·2^147",
+            "measurementGates": "0"
+          },
+          "physical": {
+            "physicalQubits": "",
+            "runtime": ""
+          },
+          "notes": "",
+          "ref": {
+            "id": "baksi-2021-quantum-rectangle-knot",
+            "label": "Baksi et al. 2021",
+            "title": "Quantum implementation and resource estimates for Rectangle and Knot",
+            "url": "https://link.springer.com/article/10.1007/s11128-021-03307-6"
+          }
         }
       ]
     },
@@ -714,7 +1076,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "bhaumik-2025-can-quantum",
+            "label": "Bhaumik et al. 2025",
+            "title": "Can Quantum Break ZUC?",
+            "url": "https://eprint.iacr.org/2025/1832"
+          }
         },
         {
           "id": "v_c0mgerd",
@@ -731,7 +1099,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "bhaumik-2025-can-quantum",
+            "label": "Bhaumik et al. 2025",
+            "title": "Can Quantum Break ZUC?",
+            "url": "https://eprint.iacr.org/2025/1832"
+          }
         }
       ]
     },
@@ -755,7 +1129,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-improved-quantum",
+            "label": "Jang et al. 2025",
+            "title": "Improved Quantum Cryptanalysis of MD5 and SHA-1",
+            "url": "https://ieeexplore.ieee.org/document/11474848/"
+          }
         }
       ]
     },
@@ -779,7 +1159,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-improved-quantum",
+            "label": "Jang et al. 2025",
+            "title": "Improved Quantum Cryptanalysis of MD5 and SHA-1",
+            "url": "https://ieeexplore.ieee.org/document/11474848/"
+          }
         }
       ]
     },
@@ -803,7 +1189,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-implementation",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Implementation and Analysis of SHA-2 and SHA-3",
+            "url": "https://doi.org/10.1109/TETC.2025.3546648"
+          }
         },
         {
           "id": "v_7a6ad0c",
@@ -820,7 +1212,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-implementation",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Implementation and Analysis of SHA-2 and SHA-3",
+            "url": "https://doi.org/10.1109/TETC.2025.3546648"
+          }
         },
         {
           "id": "v_9ubgcya",
@@ -837,7 +1235,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-implementation",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Implementation and Analysis of SHA-2 and SHA-3",
+            "url": "https://doi.org/10.1109/TETC.2025.3546648"
+          }
         }
       ]
     },
@@ -861,7 +1265,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-implementation",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Implementation and Analysis of SHA-2 and SHA-3",
+            "url": "https://doi.org/10.1109/TETC.2025.3546648"
+          }
         },
         {
           "id": "v_l76arnj",
@@ -878,7 +1288,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-implementation",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Implementation and Analysis of SHA-2 and SHA-3",
+            "url": "https://doi.org/10.1109/TETC.2025.3546648"
+          }
         },
         {
           "id": "v_s98crqw",
@@ -895,7 +1311,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-quantum-implementation",
+            "label": "Jang et al. 2025",
+            "title": "Quantum Implementation and Analysis of SHA-2 and SHA-3",
+            "url": "https://doi.org/10.1109/TETC.2025.3546648"
+          }
         }
       ]
     },
@@ -919,7 +1341,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2025-quantum-security",
+            "label": "Oh et al. 2025",
+            "title": "Quantum Security Evaluation of ASCON",
+            "url": "https://eprint.iacr.org/2025/260"
+          }
         },
         {
           "id": "v_vp3pytx",
@@ -936,7 +1364,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2025-quantum-security",
+            "label": "Oh et al. 2025",
+            "title": "Quantum Security Evaluation of ASCON",
+            "url": "https://eprint.iacr.org/2025/260"
+          }
         },
         {
           "id": "v_fxp82lm",
@@ -953,7 +1387,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "oh-2025-quantum-security",
+            "label": "Oh et al. 2025",
+            "title": "Quantum Security Evaluation of ASCON",
+            "url": "https://eprint.iacr.org/2025/260"
+          }
         }
       ]
     },
@@ -981,6 +1421,12 @@ window.CIPHER_DATA = {
             "qubits": "5619",
             "tGates": "1020782664",
             "measurementGates": "199602524"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1002,6 +1448,12 @@ window.CIPHER_DATA = {
             "qubits": "6537",
             "tGates": "1545312100",
             "measurementGates": "294665500"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1023,6 +1475,12 @@ window.CIPHER_DATA = {
             "qubits": "7460",
             "tGates": "2273149572",
             "measurementGates": "514407568"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1044,6 +1502,12 @@ window.CIPHER_DATA = {
             "qubits": "11140",
             "tGates": "7271598204",
             "measurementGates": "1425333156"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1065,6 +1529,12 @@ window.CIPHER_DATA = {
             "qubits": "14885",
             "tGates": "18180989200",
             "measurementGates": "3624331450"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         }
       ]
@@ -1094,6 +1564,12 @@ window.CIPHER_DATA = {
             "qubits": "83827",
             "tGates": "338698654",
             "measurementGates": "82077716"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1116,6 +1592,12 @@ window.CIPHER_DATA = {
             "qubits": "95838",
             "tGates": "498049308",
             "measurementGates": "120707575"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1138,6 +1620,12 @@ window.CIPHER_DATA = {
             "qubits": "119834",
             "tGates": "724547880",
             "measurementGates": "177630225"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1160,6 +1648,12 @@ window.CIPHER_DATA = {
             "qubits": "225112",
             "tGates": "2204540112",
             "measurementGates": "540413743"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         },
         {
@@ -1182,6 +1676,12 @@ window.CIPHER_DATA = {
             "qubits": "340179",
             "tGates": "4784880372",
             "measurementGates": "1101353449"
+          },
+          "ref": {
+            "id": "kim-2026-new-quantum",
+            "label": "Kim et al. 2026",
+            "title": "New Quantum Circuits for ECDLP",
+            "url": "https://eprint.iacr.org/2026/106"
           }
         }
       ]
@@ -1206,7 +1706,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-new-quantum",
+            "label": "Jang et al. 2025",
+            "title": "New Quantum Cryptanalysis of Binary Elliptic Curves",
+            "url": "https://doi.org/10.46586/tches.v2025.i2.781-804"
+          }
         },
         {
           "id": "v_33zpu0n",
@@ -1223,7 +1729,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-new-quantum",
+            "label": "Jang et al. 2025",
+            "title": "New Quantum Cryptanalysis of Binary Elliptic Curves",
+            "url": "https://doi.org/10.46586/tches.v2025.i2.781-804"
+          }
         },
         {
           "id": "v_14nqv2c",
@@ -1240,7 +1752,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-new-quantum",
+            "label": "Jang et al. 2025",
+            "title": "New Quantum Cryptanalysis of Binary Elliptic Curves",
+            "url": "https://doi.org/10.46586/tches.v2025.i2.781-804"
+          }
         },
         {
           "id": "v_ybw0nag",
@@ -1257,7 +1775,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-new-quantum",
+            "label": "Jang et al. 2025",
+            "title": "New Quantum Cryptanalysis of Binary Elliptic Curves",
+            "url": "https://doi.org/10.46586/tches.v2025.i2.781-804"
+          }
         },
         {
           "id": "v_9tgid42",
@@ -1274,7 +1798,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "jang-2025-new-quantum",
+            "label": "Jang et al. 2025",
+            "title": "New Quantum Cryptanalysis of Binary Elliptic Curves",
+            "url": "https://doi.org/10.46586/tches.v2025.i2.781-804"
+          }
         }
       ]
     },
@@ -1298,7 +1828,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         },
         {
           "id": "v_72l2q48",
@@ -1315,7 +1851,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         },
         {
           "id": "v_ibyhos4",
@@ -1332,7 +1874,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         }
       ]
     },
@@ -1356,7 +1904,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         },
         {
           "id": "v_v7hxrx3",
@@ -1373,7 +1927,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         },
         {
           "id": "v_1tyij7e",
@@ -1390,7 +1950,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         }
       ]
     },
@@ -1414,7 +1980,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         },
         {
           "id": "v_tuiiyxs",
@@ -1431,7 +2003,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         },
         {
           "id": "v_su23ef7",
@@ -1448,7 +2026,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "seo-2025-analysis-quantum",
+            "label": "Jang & Seo 2025",
+            "title": "Analysis of Quantum Attack Cost for Code-Based Cryptography",
+            "url": ""
+          }
         }
       ]
     },
@@ -1472,7 +2056,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_q2od8sn",
@@ -1489,7 +2079,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_gw6bcl8",
@@ -1506,7 +2102,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         }
       ]
     },
@@ -1530,7 +2132,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_yvf9d92",
@@ -1547,7 +2155,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_oayxe2g",
@@ -1564,7 +2178,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         }
       ]
     },
@@ -1588,7 +2208,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_sjubm6f",
@@ -1605,7 +2231,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_vlmrn8w",
@@ -1622,7 +2254,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         }
       ]
     },
@@ -1646,7 +2284,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_h00x50j",
@@ -1663,7 +2307,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         },
         {
           "id": "v_wq7pn0l",
@@ -1680,7 +2330,13 @@ window.CIPHER_DATA = {
             "physicalQubits": "",
             "runtime": ""
           },
-          "notes": ""
+          "notes": "",
+          "ref": {
+            "id": "kim-2025-concrete-quantum",
+            "label": "Kim et al. 2025",
+            "title": "Concrete Quantum Sieve for Shortest Vector Problem",
+            "url": ""
+          }
         }
       ]
     }
