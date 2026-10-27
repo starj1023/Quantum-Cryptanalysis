@@ -1255,7 +1255,7 @@ window.CIPHER_DATA = {
           "name": "SHA3-256",
           "attack": "Grover + Preimage search",
           "logical": {
-            "qubits": "224001",
+            "qubits": "22401",
             "clifford": "2^148.4",
             "tGates": "2^145.5",
             "tDepth": "2^133.1",
@@ -1278,7 +1278,7 @@ window.CIPHER_DATA = {
           "name": "SHA3-384",
           "attack": "Grover + Preimage search",
           "logical": {
-            "qubits": "224001",
+            "qubits": "22401",
             "clifford": "2^212.4",
             "tGates": "2^209.5",
             "tDepth": "2^197.1",
@@ -1301,7 +1301,7 @@ window.CIPHER_DATA = {
           "name": "SHA3-512",
           "attack": "Grover + Preimage search",
           "logical": {
-            "qubits": "224001",
+            "qubits": "22401",
             "clifford": "2^276.4",
             "tGates": "2^273.5",
             "tDepth": "2^261.1",
