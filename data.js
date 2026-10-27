@@ -34,11 +34,11 @@ window.CIPHER_DATA = {
           "name": "AES-192",
           "attack": "Grover + Exhaustive key search",
           "logical": {
-            "qubits": "7666",
-            "clifford": "2^120.3",
-            "tGates": "2^118.3",
-            "tDepth": "2^112.3",
-            "measurementGates": "2^110.5"
+            "qubits": "6425",
+            "clifford": "2^115",
+            "tGates": "2^112.5",
+            "tDepth": "2^102.2",
+            "measurementGates": "2^110.2"
           },
           "physical": {
             "physicalQubits": "2^26",
@@ -57,10 +57,10 @@ window.CIPHER_DATA = {
           "name": "AES-256",
           "attack": "Grover + Exhaustive key search",
           "logical": {
-            "qubits": "9889",
-            "clifford": "2^152.3",
-            "tGates": "2^150.3",
-            "tDepth": "2^144.3",
+            "qubits": "7001",
+            "clifford": "2^147.3",
+            "tGates": "2^144.7",
+            "tDepth": "2^134.5",
             "measurementGates": "2^142.5"
           },
           "physical": {
